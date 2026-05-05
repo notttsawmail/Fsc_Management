@@ -4,6 +4,7 @@ import 'package:isar/isar.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../../../billing/data/models/billing_order_model.dart';
 import '../models/inventory_item_model.dart';
 
 class InventoryLocalDataSource {
@@ -14,7 +15,7 @@ class InventoryLocalDataSource {
   static Future<InventoryLocalDataSource> open() async {
     final dir = await getApplicationDocumentsDirectory();
     final isar = await Isar.open(
-      [InventoryItemModelSchema],
+      [InventoryItemModelSchema, BillingOrderModelSchema],
       directory: dir.path,
       name: 'fsc_inventory',
     );
