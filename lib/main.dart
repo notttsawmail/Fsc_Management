@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/billing/presentation/screens/billing_screen.dart';
 import 'features/inventory/presentation/screens/inventory_list_screen.dart';
+import 'features/reports/presentation/screens/reports_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +52,11 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: const [BillingScreen(), InventoryListScreen()],
+        children: const [
+          BillingScreen(),
+          InventoryListScreen(),
+          ReportsScreen(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -68,6 +73,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.inventory_2_outlined),
             selectedIcon: Icon(Icons.inventory_2),
             label: 'Inventory',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics),
+            label: 'Reports',
           ),
         ],
       ),
