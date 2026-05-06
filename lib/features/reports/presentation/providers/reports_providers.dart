@@ -15,6 +15,7 @@ import '../../domain/services/sales_report_generator.dart';
 import '../../domain/usecases/get_analytics_dashboard.dart';
 import '../../domain/usecases/get_calendar_sales.dart';
 import '../../domain/usecases/get_sales_report.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 
 final nepaliReportClockProvider = Provider<NepaliReportClock>((ref) {
   return NepaliReportClock();
@@ -108,9 +109,10 @@ class ReportsPdfController extends StateNotifier<AsyncValue<String?>> {
   Future<void> share(DailySalesReport report) async {
     state = const AsyncLoading();
     try {
+      final settings = await _ref.read(appSettingsProvider.future);
       await _ref
           .read(reportsPdfServiceProvider)
-          .shareDailySalesPdf(report: report);
+          .shareDailySalesPdf(report: report, shopName: settings.shopName);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -121,9 +123,10 @@ class ReportsPdfController extends StateNotifier<AsyncValue<String?>> {
   Future<String> save(DailySalesReport report) async {
     state = const AsyncLoading();
     try {
+      final settings = await _ref.read(appSettingsProvider.future);
       final path = await _ref
           .read(reportsPdfServiceProvider)
-          .saveDailySalesPdf(report: report);
+          .saveDailySalesPdf(report: report, shopName: settings.shopName);
       state = AsyncData(path);
       return path;
     } catch (error, stackTrace) {

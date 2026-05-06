@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../settings/presentation/providers/settings_providers.dart';
+import '../../../settings/presentation/widgets/settings_formatters.dart';
 import '../providers/reports_providers.dart';
 import '../widgets/report_formatters.dart';
 import '../widgets/report_summary_card.dart';
@@ -11,6 +13,8 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(analyticsDashboardProvider);
+    final settings = ref.watch(appSettingsProvider);
+    final notificationSummary = ref.watch(notificationSummaryProvider);
     return dashboard.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
@@ -24,6 +28,11 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
           children: [
+            _OperationsStatusCard(
+              settings: settings,
+              notificationSummary: notificationSummary,
+            ),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -107,6 +116,68 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
                     trailing: Text(item.quantity.toString()),
                   ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OperationsStatusCard extends StatelessWidget {
+  const _OperationsStatusCard({
+    required this.settings,
+    required this.notificationSummary,
+  });
+
+  final AsyncValue<dynamic> settings;
+  final AsyncValue<dynamic> notificationSummary;
+
+  @override
+  Widget build(BuildContext context) {
+    final notificationsEnabled = settings.maybeWhen(
+      data: (value) => value.notificationsEnabled ? 'On' : 'Off',
+      orElse: () => '...',
+    );
+    final backupAt = settings.maybeWhen(
+      data: (value) => settingsDate(value.latestBackupAt),
+      orElse: () => '...',
+    );
+    final notified = notificationSummary.maybeWhen(
+      data: (value) => value.notifiedItemCount.toString(),
+      orElse: () => '...',
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            SizedBox(
+              width: 240,
+              child: ReportSummaryCard(
+                title: 'Latest backup',
+                value: backupAt,
+                icon: Icons.backup_outlined,
+              ),
+            ),
+            SizedBox(
+              width: 240,
+              child: ReportSummaryCard(
+                title: 'Notifications',
+                value: notificationsEnabled,
+                icon: Icons.notifications_active_outlined,
+              ),
+            ),
+            SizedBox(
+              width: 240,
+              child: ReportSummaryCard(
+                title: 'Items notified',
+                value: notified,
+                icon: Icons.notification_important_outlined,
+              ),
             ),
           ],
         ),

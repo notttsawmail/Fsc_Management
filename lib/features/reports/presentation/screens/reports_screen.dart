@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/daily_sales_report.dart';
 import '../providers/reports_providers.dart';
 import '../widgets/date_filter_bar.dart';
@@ -60,6 +61,12 @@ class _ReportsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final report = ref.watch(salesReportProvider);
     final pdfState = ref.watch(reportsPdfControllerProvider);
+    final shopName = ref
+        .watch(appSettingsProvider)
+        .maybeWhen(
+          data: (settings) => settings.shopName,
+          orElse: () => 'FSC Shop',
+        );
 
     ref.listen<AsyncValue<String?>>(reportsPdfControllerProvider, (
       previous,
@@ -100,6 +107,7 @@ class _ReportsTab extends ConsumerWidget {
               child: _ReportContent(
                 report: data,
                 isPdfBusy: pdfState.isLoading,
+                shopName: shopName,
               ),
             ),
           ),
@@ -110,10 +118,15 @@ class _ReportsTab extends ConsumerWidget {
 }
 
 class _ReportContent extends ConsumerWidget {
-  const _ReportContent({required this.report, required this.isPdfBusy});
+  const _ReportContent({
+    required this.report,
+    required this.isPdfBusy,
+    required this.shopName,
+  });
 
   final DailySalesReport report;
   final bool isPdfBusy;
+  final String shopName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,7 +188,10 @@ class _ReportContent extends ConsumerWidget {
                   ? null
                   : () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => PdfPreviewScreen(report: report),
+                        builder: (_) => PdfPreviewScreen(
+                          report: report,
+                          shopName: shopName,
+                        ),
                       ),
                     ),
               icon: const Icon(Icons.picture_as_pdf_outlined),

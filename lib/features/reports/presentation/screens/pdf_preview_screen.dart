@@ -6,9 +6,14 @@ import '../../data/services/reports_pdf_service.dart';
 import '../../domain/services/nepali_report_clock.dart';
 
 class PdfPreviewScreen extends StatelessWidget {
-  const PdfPreviewScreen({super.key, required this.report});
+  const PdfPreviewScreen({
+    super.key,
+    required this.report,
+    required this.shopName,
+  });
 
   final DailySalesReport report;
+  final String shopName;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +25,8 @@ class PdfPreviewScreen extends StatelessWidget {
         canChangePageFormat: true,
         canDebug: false,
         pdfFileName: 'sales_report.pdf',
-        build: (_) => service.buildDailySalesPdf(report: report),
+        build: (_) =>
+            service.buildDailySalesPdf(report: report, shopName: shopName),
       ),
     );
   }
