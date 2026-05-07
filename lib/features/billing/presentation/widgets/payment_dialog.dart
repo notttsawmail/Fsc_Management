@@ -19,6 +19,7 @@ class PaymentDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPhonePay = paymentMethod == PaymentMethod.phonePay;
     return AlertDialog(
+      scrollable: true,
       title: Text(isPhonePay ? 'Phone Pay payment' : 'Cash payment'),
       content: Column(
         mainAxisSize: MainAxisSize.min,

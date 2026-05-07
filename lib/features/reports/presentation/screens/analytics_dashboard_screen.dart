@@ -33,44 +33,53 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
               notificationSummary: notificationSummary,
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                SizedBox(
-                  width: 240,
-                  child: ReportSummaryCard(
-                    title: "Today's sales",
-                    value: money(data.todaySales),
-                    icon: Icons.payments_outlined,
-                  ),
-                ),
-                SizedBox(
-                  width: 240,
-                  child: ReportSummaryCard(
-                    title: "Today's tokens",
-                    value: data.todayTokenCount.toString(),
-                    icon: Icons.confirmation_number_outlined,
-                  ),
-                ),
-                SizedBox(
-                  width: 240,
-                  child: ReportSummaryCard(
-                    title: 'Low stock',
-                    value: data.lowStockItems.length.toString(),
-                    icon: Icons.warning_amber_outlined,
-                    color: Colors.orange,
-                  ),
-                ),
-                SizedBox(
-                  width: 240,
-                  child: ReportSummaryCard(
-                    title: 'Inventory items',
-                    value: data.totalInventoryItems.toString(),
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = _responsiveCardWidth(
+                  constraints.maxWidth,
+                  minWidth: 220,
+                  maxWidth: 280,
+                );
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(
+                      width: cardWidth,
+                      child: ReportSummaryCard(
+                        title: "Today's sales",
+                        value: money(data.todaySales),
+                        icon: Icons.payments_outlined,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: ReportSummaryCard(
+                        title: "Today's tokens",
+                        value: data.todayTokenCount.toString(),
+                        icon: Icons.confirmation_number_outlined,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: ReportSummaryCard(
+                        title: 'Low stock',
+                        value: data.lowStockItems.length.toString(),
+                        icon: Icons.warning_amber_outlined,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: ReportSummaryCard(
+                        title: 'Inventory items',
+                        value: data.totalInventoryItems.toString(),
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             _DashboardListCard(
@@ -151,39 +160,65 @@ class _OperationsStatusCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Latest backup',
-                value: backupAt,
-                icon: Icons.backup_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Notifications',
-                value: notificationsEnabled,
-                icon: Icons.notifications_active_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Items notified',
-                value: notified,
-                icon: Icons.notification_important_outlined,
-              ),
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = _responsiveCardWidth(
+              constraints.maxWidth,
+              minWidth: 220,
+              maxWidth: 280,
+            );
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Latest backup',
+                    value: backupAt,
+                    icon: Icons.backup_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Notifications',
+                    value: notificationsEnabled,
+                    icon: Icons.notifications_active_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Items notified',
+                    value: notified,
+                    icon: Icons.notification_important_outlined,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
+
+double _responsiveCardWidth(
+  double availableWidth, {
+  required double minWidth,
+  required double maxWidth,
+}) {
+  if (availableWidth < 420) {
+    return availableWidth;
+  }
+
+  final twoColumnWidth = (availableWidth - 10) / 2;
+  if (twoColumnWidth >= minWidth) {
+    return twoColumnWidth.clamp(minWidth, maxWidth);
+  }
+
+  return availableWidth;
 }
 
 class _DashboardListCard extends StatelessWidget {

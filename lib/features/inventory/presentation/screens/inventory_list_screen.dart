@@ -29,6 +29,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     final searchQuery = ref.watch(inventorySearchQueryProvider);
     final inventoryItems = ref.watch(inventoryItemsProvider);
     final controllerState = ref.watch(inventoryControllerProvider);
+    final compact = MediaQuery.sizeOf(context).width < 420;
 
     ref.listen<AsyncValue<void>>(inventoryControllerProvider, (previous, next) {
       next.whenOrNull(
@@ -114,13 +115,24 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AddEditInventoryItemScreen()),
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text('Add item'),
-      ),
+      floatingActionButton: compact
+          ? FloatingActionButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AddEditInventoryItemScreen(),
+                ),
+              ),
+              child: const Icon(Icons.add),
+            )
+          : FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AddEditInventoryItemScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('Add item'),
+            ),
     );
   }
 }

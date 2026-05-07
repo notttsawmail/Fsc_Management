@@ -26,33 +26,27 @@ class CartPanel extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 240),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Token ${activeToken.tokenNumber}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Text(
-                        '${cart.tokens.length} open token${cart.tokens.length == 1 ? '' : 's'}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                Wrap(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compactHeader = constraints.maxWidth < 360;
+                final tokenSummary = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Token ${activeToken.tokenNumber}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    Text(
+                      '${cart.tokens.length} open token${cart.tokens.length == 1 ? '' : 's'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                );
+                final actions = Wrap(
                   spacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
@@ -68,8 +62,33 @@ class CartPanel extends ConsumerWidget {
                       icon: const Icon(Icons.close_fullscreen_outlined),
                     ),
                   ],
-                ),
-              ],
+                );
+
+                if (compactHeader) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      tokenSummary,
+                      const SizedBox(height: 8),
+                      actions,
+                    ],
+                  );
+                }
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  alignment: WrapAlignment.spaceBetween,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 240),
+                      child: tokenSummary,
+                    ),
+                    actions,
+                  ],
+                );
+              },
             ),
             const Divider(),
             Expanded(
@@ -83,75 +102,116 @@ class CartPanel extends ConsumerWidget {
                         final available = cart.availableFor(cartItem.item);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ItemImagePreview(
-                                imagePath: cartItem.item.imagePath,
-                                size: 52,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final compactRow = constraints.maxWidth < 340;
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ItemImagePreview(
+                                    imagePath: cartItem.item.imagePath,
+                                    size: 52,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            cartItem.item.name,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          tooltip: 'Remove',
-                                          onPressed: () => cartController
-                                              .removeItem(cartItem.item.id),
-                                          icon: const Icon(Icons.close),
-                                        ),
-                                      ],
-                                    ),
-                                    Text(
-                                      '${nepaliRupees(cartItem.item.price)} each',
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        ItemQuantityControls(
-                                          quantity: cartItem.quantity,
-                                          canIncrease:
-                                              !cartItem
-                                                  .item
-                                                  .isTrackableInventory ||
-                                              available > 0,
-                                          onDecrease: () =>
-                                              cartController.decreaseQuantity(
-                                                cartItem.item.id,
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                cartItem.item.name,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium,
                                               ),
-                                          onIncrease: () => cartController
-                                              .increaseQuantity(cartItem.item),
+                                            ),
+                                            IconButton(
+                                              tooltip: 'Remove',
+                                              onPressed: () => cartController
+                                                  .removeItem(cartItem.item.id),
+                                              icon: const Icon(Icons.close),
+                                            ),
+                                          ],
                                         ),
-                                        const Spacer(),
-                                        Flexible(
-                                          child: Text(
-                                            nepaliRupees(cartItem.lineTotal),
-                                            textAlign: TextAlign.end,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium,
+                                        Text(
+                                          '${nepaliRupees(cartItem.item.price)} each',
+                                        ),
+                                        const SizedBox(height: 8),
+                                        if (compactRow) ...[
+                                          ItemQuantityControls(
+                                            quantity: cartItem.quantity,
+                                            canIncrease:
+                                                !cartItem
+                                                    .item
+                                                    .isTrackableInventory ||
+                                                available > 0,
+                                            onDecrease: () =>
+                                                cartController.decreaseQuantity(
+                                                  cartItem.item.id,
+                                                ),
+                                            onIncrease: () =>
+                                                cartController.increaseQuantity(
+                                                  cartItem.item,
+                                                ),
                                           ),
-                                        ),
+                                          const SizedBox(height: 8),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Text(
+                                              nepaliRupees(cartItem.lineTotal),
+                                              textAlign: TextAlign.end,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.titleMedium,
+                                            ),
+                                          ),
+                                        ] else
+                                          Row(
+                                            children: [
+                                              ItemQuantityControls(
+                                                quantity: cartItem.quantity,
+                                                canIncrease:
+                                                    !cartItem
+                                                        .item
+                                                        .isTrackableInventory ||
+                                                    available > 0,
+                                                onDecrease: () => cartController
+                                                    .decreaseQuantity(
+                                                      cartItem.item.id,
+                                                    ),
+                                                onIncrease: () => cartController
+                                                    .increaseQuantity(
+                                                      cartItem.item,
+                                                    ),
+                                              ),
+                                              const Spacer(),
+                                              Flexible(
+                                                child: Text(
+                                                  nepaliRupees(
+                                                    cartItem.lineTotal,
+                                                  ),
+                                                  textAlign: TextAlign.end,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.titleMedium,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         );
                       },

@@ -77,11 +77,15 @@ class BillingScreen extends ConsumerWidget {
                   );
 
                   if (isDesktop) {
+                    final cartWidth = (constraints.maxWidth * 0.34).clamp(
+                      380.0,
+                      460.0,
+                    );
                     return Row(
                       children: [
                         Expanded(flex: 3, child: inventoryPane),
                         const VerticalDivider(width: 1),
-                        SizedBox(width: 430, child: cartPane),
+                        SizedBox(width: cartWidth, child: cartPane),
                       ],
                     );
                   }
@@ -174,25 +178,28 @@ class _MobileBillingLayout extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-          child: SegmentedButton<int>(
-            segments: [
-              const ButtonSegment(
-                value: 0,
-                icon: Icon(Icons.restaurant_menu_outlined),
-                label: Text('Items'),
-              ),
-              ButtonSegment(
-                value: 1,
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: Text(hasItems ? 'Cart' : 'Cart'),
-              ),
-            ],
-            selected: {selectedTab},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) {
-              ref.read(billingMobileTabProvider.notifier).state =
-                  selection.first;
-            },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(
+                  value: 0,
+                  icon: Icon(Icons.restaurant_menu_outlined),
+                  label: Text('Items'),
+                ),
+                ButtonSegment(
+                  value: 1,
+                  icon: Icon(Icons.receipt_long_outlined),
+                  label: Text('Cart'),
+                ),
+              ],
+              selected: {selectedTab},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) {
+                ref.read(billingMobileTabProvider.notifier).state =
+                    selection.first;
+              },
+            ),
           ),
         ),
         Expanded(child: selectedTab == 0 ? inventoryPane : cartPane),
@@ -329,8 +336,12 @@ class _TokenTabs extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) =>
-          const SafeArea(child: SizedBox(height: 560, child: _TokenManager())),
+      builder: (_) {
+        final height = MediaQuery.sizeOf(context).height * 0.8;
+        return SafeArea(
+          child: SizedBox(height: height, child: _TokenManager()),
+        );
+      },
     );
   }
 }
