@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../../billing/domain/entities/billing_enums.dart';
 import '../../domain/entities/app_settings.dart';
 
@@ -30,7 +31,7 @@ class AppSettingsModel {
       id: id,
       shopName: shopName,
       shopAddress: shopAddress,
-      currencySymbol: currencySymbol,
+      currencySymbol: nepaliRupeeSymbol,
       taxPercentage: taxPercentage,
       useNepaliTimezone: useNepaliTimezone,
       defaultPaymentMethod: PaymentMethod.values.firstWhere(
@@ -79,9 +80,7 @@ class AppSettingsModel {
       ..id = settings.id
       ..shopName = settings.shopName.trim()
       ..shopAddress = settings.shopAddress.trim()
-      ..currencySymbol = settings.currencySymbol.trim().isEmpty
-          ? 'Rs.'
-          : settings.currencySymbol.trim()
+      ..currencySymbol = nepaliRupeeSymbol
       ..taxPercentage = settings.taxPercentage
       ..useNepaliTimezone = settings.useNepaliTimezone
       ..defaultPaymentMethod = settings.defaultPaymentMethod.name
@@ -105,7 +104,7 @@ class AppSettingsModel {
       ..id = (json['id'] as num?)?.toInt() ?? 1
       ..shopName = json['shopName'] as String? ?? 'FSC Shop'
       ..shopAddress = json['shopAddress'] as String? ?? ''
-      ..currencySymbol = json['currencySymbol'] as String? ?? 'Rs.'
+      ..currencySymbol = nepaliRupeeSymbol
       ..taxPercentage = (json['taxPercentage'] as num?)?.toDouble() ?? 0
       ..useNepaliTimezone = json['useNepaliTimezone'] as bool? ?? true
       ..defaultPaymentMethod =

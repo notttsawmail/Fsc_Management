@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../domain/entities/billing_enums.dart';
 import '../../domain/entities/billing_order.dart';
+import '../../../receipt_barcode/presentation/screens/receipt_preview_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   const OrderSuccessScreen({super.key, required this.order});
@@ -37,17 +39,29 @@ class OrderSuccessScreen extends StatelessWidget {
             (item) => ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(item.itemName),
-              subtitle: Text('${item.quantity} x Rs ${item.unitPrice}'),
-              trailing: Text('Rs ${item.lineTotal.toStringAsFixed(2)}'),
+              subtitle: Text(
+                '${item.quantity} x ${nepaliRupees(item.unitPrice)}',
+              ),
+              trailing: Text(nepaliRupees(item.lineTotal)),
             ),
           ),
           const Divider(height: 32),
           _InfoRow(
             label: 'Total',
-            value: 'Rs ${order.totalAmount.toStringAsFixed(2)}',
+            value: nepaliRupees(order.totalAmount),
             isStrong: true,
           ),
           const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ReceiptPreviewScreen(order: order),
+              ),
+            ),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: const Text('Receipt'),
+          ),
+          const SizedBox(height: 10),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.point_of_sale_outlined),
@@ -79,9 +93,16 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Text(label, style: style),
-          const Spacer(),
-          Text(value, style: style),
+          Expanded(child: Text(label, style: style)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              style: style,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

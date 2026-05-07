@@ -8,6 +8,8 @@ class InventoryItem {
     required this.quantity,
     required this.lowStockLimit,
     this.imagePath,
+    this.barcode,
+    this.barcodeImagePath,
     required this.isTrackableInventory,
     required this.createdAt,
     required this.updatedAt,
@@ -21,6 +23,8 @@ class InventoryItem {
   final int quantity;
   final int lowStockLimit;
   final String? imagePath;
+  final String? barcode;
+  final String? barcodeImagePath;
   final bool isTrackableInventory;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -38,6 +42,10 @@ class InventoryItem {
     int? lowStockLimit,
     String? imagePath,
     bool? clearImagePath,
+    String? barcode,
+    bool? clearBarcode,
+    String? barcodeImagePath,
+    bool? clearBarcodeImagePath,
     bool? isTrackableInventory,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -51,6 +59,10 @@ class InventoryItem {
       quantity: quantity ?? this.quantity,
       lowStockLimit: lowStockLimit ?? this.lowStockLimit,
       imagePath: clearImagePath == true ? null : imagePath ?? this.imagePath,
+      barcode: clearBarcode == true ? null : barcode ?? this.barcode,
+      barcodeImagePath: clearBarcodeImagePath == true
+          ? null
+          : barcodeImagePath ?? this.barcodeImagePath,
       isTrackableInventory: isTrackableInventory ?? this.isTrackableInventory,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

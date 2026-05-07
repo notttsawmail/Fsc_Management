@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../receipt_barcode/presentation/screens/reprint_receipts_screen.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/daily_sales_report.dart';
 import '../providers/reports_providers.dart';
@@ -43,6 +44,15 @@ class _ReportsAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       title: const Text('Reports'),
+      actions: [
+        IconButton(
+          tooltip: 'Reprint receipts',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ReprintReceiptsScreen()),
+          ),
+          icon: const Icon(Icons.print_outlined),
+        ),
+      ],
       bottom: const TabBar(
         tabs: [
           Tab(icon: Icon(Icons.receipt_long_outlined), text: 'Reports'),

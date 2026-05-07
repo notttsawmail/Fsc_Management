@@ -1,5 +1,6 @@
 import '../../../billing/domain/entities/billing_enums.dart';
 import '../../../billing/domain/entities/billing_order.dart';
+import '../../../expenses/domain/entities/expense.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 import '../entities/analytics_dashboard.dart';
 import '../entities/calendar_sales_day.dart';
@@ -60,6 +61,7 @@ class SalesReportGenerator {
   List<CalendarSalesDay> buildCalendar({
     required DateTime month,
     required List<BillingOrder> orders,
+    List<Expense> expenses = const [],
   }) {
     final firstDay = DateTime(month.year, month.month);
     final nextMonth = DateTime(month.year, month.month + 1);
@@ -78,6 +80,9 @@ class SalesReportGenerator {
                 order.orderStatus != OrderStatus.cancelled,
           )
           .toList(growable: false);
+      final dayExpenses = expenses
+          .where((expense) => _clock.compactDate(expense.expenseDate) == dayKey)
+          .fold(0.0, (total, expense) => total + expense.amount);
       days.add(
         CalendarSalesDay(
           date: date,
@@ -87,6 +92,7 @@ class SalesReportGenerator {
             0,
             (total, order) => total + order.totalAmount,
           ),
+          totalExpenses: dayExpenses,
         ),
       );
     }

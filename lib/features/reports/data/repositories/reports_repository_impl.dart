@@ -37,7 +37,15 @@ class ReportsRepositoryImpl implements ReportsRepository {
   Future<List<CalendarSalesDay>> getCalendarSales(DateTime month) async {
     final orderModels = await _localDataSource.getOrdersForMonth(month);
     final orders = orderModels.map((order) => order.toEntity()).toList();
-    return _generator.buildCalendar(month: month, orders: orders);
+    final expenseModels = await _localDataSource.getExpensesForMonth(month);
+    final expenses = expenseModels
+        .map((expense) => expense.toEntity())
+        .toList();
+    return _generator.buildCalendar(
+      month: month,
+      orders: orders,
+      expenses: expenses,
+    );
   }
 
   @override

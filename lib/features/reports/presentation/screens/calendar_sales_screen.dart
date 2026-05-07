@@ -46,6 +46,16 @@ class CalendarSalesScreen extends ConsumerWidget {
                           ),
                         );
                       }
+                      CalendarSalesDay? selectedDay;
+                      for (final day in calendarDays) {
+                        final selected = report.startDate;
+                        if (day.date.year == selected.year &&
+                            day.date.month == selected.month &&
+                            day.date.day == selected.day) {
+                          selectedDay = day;
+                          break;
+                        }
+                      }
                       return Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -58,7 +68,13 @@ class CalendarSalesScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 8),
                               Text('Tokens: ${report.totalOrders}'),
-                              Text('Revenue: ${money(report.totalIncome)}'),
+                              Text('Sales: ${money(report.totalIncome)}'),
+                              Text(
+                                'Expenses: ${money(selectedDay?.totalExpenses ?? 0)}',
+                              ),
+                              Text(
+                                'Profit: ${money(selectedDay?.netProfit ?? report.totalIncome)}',
+                              ),
                               Text('Quantity: ${report.totalQuantitySold}'),
                               Text('Cancelled: ${report.cancelledOrdersCount}'),
                               const Divider(height: 24),
@@ -168,25 +184,34 @@ class _CalendarGrid extends ConsumerWidget {
                 _WeekdayLabel('Sat'),
               ],
             ),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: .82,
-              ),
-              itemCount: cells.length,
-              itemBuilder: (context, index) {
-                final day = cells[index];
-                if (day == null) {
-                  return const SizedBox.shrink();
-                }
-                final isSelected =
-                    selected != null &&
-                    selected.year == day.date.year &&
-                    selected.month == day.date.month &&
-                    selected.day == day.date.day;
-                return _CalendarDayTile(day: day, isSelected: isSelected);
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 560;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: compact ? .92 : .82,
+                  ),
+                  itemCount: cells.length,
+                  itemBuilder: (context, index) {
+                    final day = cells[index];
+                    if (day == null) {
+                      return const SizedBox.shrink();
+                    }
+                    final isSelected =
+                        selected != null &&
+                        selected.year == day.date.year &&
+                        selected.month == day.date.month &&
+                        selected.day == day.date.day;
+                    return _CalendarDayTile(
+                      day: day,
+                      isSelected: isSelected,
+                      compact: compact,
+                    );
+                  },
+                );
               },
             ),
           ],
@@ -217,15 +242,21 @@ class _WeekdayLabel extends StatelessWidget {
 }
 
 class _CalendarDayTile extends ConsumerWidget {
-  const _CalendarDayTile({required this.day, required this.isSelected});
+  const _CalendarDayTile({
+    required this.day,
+    required this.isSelected,
+    required this.compact,
+  });
 
   final CalendarSalesDay day;
   final bool isSelected;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final hasSales = day.orderCount > 0;
+    final hasExpenses = day.totalExpenses > 0;
     return Padding(
       padding: const EdgeInsets.all(2),
       child: InkWell(
@@ -237,7 +268,7 @@ class _CalendarDayTile extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? scheme.primaryContainer
-                : hasSales
+                : hasSales || hasExpenses
                 ? scheme.secondaryContainer.withValues(alpha: .55)
                 : scheme.surface,
             borderRadius: BorderRadius.circular(8),
@@ -254,21 +285,54 @@ class _CalendarDayTile extends ConsumerWidget {
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const Spacer(),
-              Text(
-                'T: ${day.tokenCount}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-              Text(
-                money(day.totalIncome),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
+              if (compact)
+                Wrap(
+                  spacing: 3,
+                  children: [
+                    if (hasSales) const _DayDot(color: Colors.green),
+                    if (hasExpenses) const _DayDot(color: Colors.orange),
+                    if (day.netProfit < 0) const _DayDot(color: Colors.red),
+                  ],
+                )
+              else ...[
+                Text(
+                  'S: ${money(day.totalIncome)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Text(
+                  'E: ${money(day.totalExpenses)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Text(
+                  'P: ${money(day.netProfit)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DayDot extends StatelessWidget {
+  const _DayDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 6,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }

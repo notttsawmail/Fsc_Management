@@ -4,6 +4,7 @@ class BackupResult {
     required this.createdAt,
     required this.inventoryCount,
     required this.orderCount,
+    this.expenseCount = 0,
     required this.settingsCount,
   });
 
@@ -11,5 +12,6 @@ class BackupResult {
   final DateTime createdAt;
   final int inventoryCount;
   final int orderCount;
+  final int expenseCount;
   final int settingsCount;
 }

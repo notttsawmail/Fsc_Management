@@ -1,4 +1,5 @@
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../../core/formatters/currency_formatters.dart';
 
 enum TokenResetRule { daily, never }
 
@@ -28,7 +29,7 @@ class AppSettings {
       id: 1,
       shopName: 'FSC Shop',
       shopAddress: '',
-      currencySymbol: 'Rs.',
+      currencySymbol: nepaliRupeeSymbol,
       taxPercentage: 0,
       useNepaliTimezone: true,
       defaultPaymentMethod: PaymentMethod.cash,

@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../inventory/data/models/inventory_item_model.dart';
+import '../../../expenses/data/models/expense_model.dart';
 import '../../../settings/data/models/app_settings_model.dart';
 import '../../../settings/data/models/low_stock_notification_model.dart';
 import '../models/billing_order_model.dart';
@@ -17,6 +18,7 @@ class BillingLocalDataSource {
       [
         InventoryItemModelSchema,
         BillingOrderModelSchema,
+        ExpenseModelSchema,
         AppSettingsModelSchema,
         LowStockNotificationModelSchema,
       ],

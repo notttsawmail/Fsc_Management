@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/billing/presentation/screens/billing_screen.dart';
+import 'features/expenses/presentation/screens/expense_list_screen.dart';
 import 'features/inventory/domain/entities/inventory_item.dart';
 import 'features/inventory/presentation/screens/add_edit_inventory_item_screen.dart';
 import 'features/inventory/presentation/screens/inventory_list_screen.dart';
@@ -79,44 +80,99 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   Widget build(BuildContext context) {
     ref.watch(lowStockMonitorProvider);
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: const [
-          BillingScreen(),
-          InventoryListScreen(),
-          ReportsScreen(),
-          SettingsScreen(),
-        ],
+    final pages = const [
+      BillingScreen(),
+      InventoryListScreen(),
+      ExpenseListScreen(),
+      ReportsScreen(),
+      SettingsScreen(),
+    ];
+    final destinations = const [
+      NavigationDestination(
+        icon: Icon(Icons.point_of_sale_outlined),
+        selectedIcon: Icon(Icons.point_of_sale),
+        label: 'Billing',
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.point_of_sale_outlined),
-            selectedIcon: Icon(Icons.point_of_sale),
-            label: 'Billing',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: 'Inventory',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Reports',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+      NavigationDestination(
+        icon: Icon(Icons.inventory_2_outlined),
+        selectedIcon: Icon(Icons.inventory_2),
+        label: 'Inventory',
       ),
+      NavigationDestination(
+        icon: Icon(Icons.receipt_long_outlined),
+        selectedIcon: Icon(Icons.receipt_long),
+        label: 'Expenses',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.analytics_outlined),
+        selectedIcon: Icon(Icons.analytics),
+        label: 'Reports',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.settings_outlined),
+        selectedIcon: Icon(Icons.settings),
+        label: 'Settings',
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useRail = constraints.maxWidth >= 900;
+        final body = IndexedStack(index: _selectedIndex, children: pages);
+        if (useRail) {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  extended: constraints.maxWidth >= 1180,
+                  onDestinationSelected: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.point_of_sale_outlined),
+                      selectedIcon: Icon(Icons.point_of_sale),
+                      label: Text('Billing'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.inventory_2_outlined),
+                      selectedIcon: Icon(Icons.inventory_2),
+                      label: Text('Inventory'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.receipt_long_outlined),
+                      selectedIcon: Icon(Icons.receipt_long),
+                      label: Text('Expenses'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.analytics_outlined),
+                      selectedIcon: Icon(Icons.analytics),
+                      label: Text('Reports'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings),
+                      label: Text('Settings'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: body),
+              ],
+            ),
+          );
+        }
+        return Scaffold(
+          body: body,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) {
+              setState(() => _selectedIndex = index);
+            },
+            destinations: destinations,
+          ),
+        );
+      },
     );
   }
 }
