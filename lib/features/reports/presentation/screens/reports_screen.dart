@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../expenses/domain/entities/expense_enums.dart';
 import '../../../receipt_barcode/presentation/screens/reprint_receipts_screen.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/daily_sales_report.dart';
@@ -166,6 +167,25 @@ class _ReportContent extends ConsumerWidget {
             SizedBox(
               width: 240,
               child: ReportSummaryCard(
+                title: 'Total expenses',
+                value: money(report.totalExpenses),
+                icon: Icons.receipt_long_outlined,
+              ),
+            ),
+            SizedBox(
+              width: 240,
+              child: ReportSummaryCard(
+                title: 'Net profit',
+                value: money(report.netProfit),
+                icon: Icons.account_balance_outlined,
+                color: report.netProfit >= 0
+                    ? Colors.green.shade700
+                    : Theme.of(context).colorScheme.error,
+              ),
+            ),
+            SizedBox(
+              width: 240,
+              child: ReportSummaryCard(
                 title: 'Quantity sold',
                 value: report.totalQuantitySold.toString(),
                 icon: Icons.shopping_bag_outlined,
@@ -184,6 +204,8 @@ class _ReportContent extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         _PaymentSummary(report: report),
+        const SizedBox(height: 16),
+        _ExpenseSummary(report: report),
         const SizedBox(height: 16),
         _BestSellingItems(report: report),
         const SizedBox(height: 16),
@@ -228,6 +250,63 @@ class _ReportContent extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ExpenseSummary extends StatelessWidget {
+  const _ExpenseSummary({required this.report});
+
+  final DailySalesReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Expenses in this period',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            if (report.expenses.isEmpty)
+              const Text('No expense entries for this period.')
+            else ...[
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.summarize_outlined),
+                title: const Text('Total expenses'),
+                subtitle: Text('${report.expenses.length} entries'),
+                trailing: Text(money(report.totalExpenses)),
+              ),
+              const Divider(),
+              for (final expense in report.expenses.take(5))
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text(expense.title),
+                  subtitle: Text(
+                    '${expense.category} • ${expense.paymentMethod.label}',
+                  ),
+                  trailing: Text(money(expense.amount)),
+                ),
+              if (report.expenses.length > 5)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Showing 5 of ${report.expenses.length} expense entries. Full list is included in the PDF.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

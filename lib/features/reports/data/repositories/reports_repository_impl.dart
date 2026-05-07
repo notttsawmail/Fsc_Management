@@ -24,8 +24,20 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   @override
   Future<DailySalesReport> getSalesReport(ReportDateFilter filter) async {
+    final range = _clock.resolve(filter);
     final orders = await getOrdersForFilter(filter);
-    return _generator.buildReport(filter: filter, orders: orders);
+    final expenseModels = await _localDataSource.getExpensesBetween(
+      startInclusive: range.startInclusive,
+      endInclusive: range.endInclusive,
+    );
+    final expenses = expenseModels
+        .map((expense) => expense.toEntity())
+        .toList();
+    return _generator.buildReport(
+      filter: filter,
+      orders: orders,
+      expenses: expenses,
+    );
   }
 
   @override

@@ -18,6 +18,7 @@ class SalesReportGenerator {
   DailySalesReport buildReport({
     required ReportDateFilter filter,
     required List<BillingOrder> orders,
+    List<Expense> expenses = const [],
   }) {
     final range = _clock.resolve(filter);
     final paidOrders = orders
@@ -47,6 +48,10 @@ class SalesReportGenerator {
         0,
         (total, order) => total + order.totalAmount,
       ),
+      totalExpenses: expenses.fold(
+        0.0,
+        (total, expense) => total + expense.amount,
+      ),
       totalQuantitySold: itemSales.fold(
         0,
         (total, item) => total + item.quantitySold,
@@ -55,6 +60,7 @@ class SalesReportGenerator {
       paymentSummaries: paymentSummaries,
       itemSales: itemSales,
       bestSellingItems: bestSelling.take(5).toList(growable: false),
+      expenses: expenses,
     );
   }
 

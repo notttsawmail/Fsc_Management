@@ -1,10 +1,7 @@
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 
+import '../../../../core/data/app_isar.dart';
 import '../../../billing/data/models/billing_order_model.dart';
-import '../../../inventory/data/models/inventory_item_model.dart';
-import '../../../settings/data/models/app_settings_model.dart';
-import '../../../settings/data/models/low_stock_notification_model.dart';
 import '../models/expense_model.dart';
 
 class ExpenseLocalDataSource {
@@ -13,18 +10,7 @@ class ExpenseLocalDataSource {
   final Isar _isar;
 
   static Future<ExpenseLocalDataSource> open() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final isar = await Isar.open(
-      [
-        InventoryItemModelSchema,
-        BillingOrderModelSchema,
-        ExpenseModelSchema,
-        AppSettingsModelSchema,
-        LowStockNotificationModelSchema,
-      ],
-      directory: dir.path,
-      name: 'fsc_inventory',
-    );
+    final isar = await AppIsar.open();
     return ExpenseLocalDataSource._(isar);
   }
 
