@@ -19,6 +19,23 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<List<String>> getCategories() => _localDataSource.getCategories();
 
   @override
+  Future<InventoryItem?> findByBarcode(String barcode) async {
+    final item = await _localDataSource.findByBarcode(barcode);
+    return item?.toEntity();
+  }
+
+  @override
+  Future<bool> isBarcodeUnique({
+    required String barcode,
+    int? excludingItemId,
+  }) {
+    return _localDataSource.isBarcodeUnique(
+      barcode: barcode,
+      excludingItemId: excludingItemId,
+    );
+  }
+
+  @override
   Future<void> addItem(InventoryItem item) {
     final now = DateTime.now();
     final itemToSave = item.copyWith(

@@ -20,6 +20,11 @@ class InventoryItemModel {
   late int quantity;
   late int lowStockLimit;
   String? imagePath;
+
+  @Index(caseSensitive: false)
+  String? barcode;
+  String? barcodeImagePath;
+
   late bool isTrackableInventory;
   late DateTime createdAt;
   late DateTime updatedAt;
@@ -34,6 +39,8 @@ class InventoryItemModel {
       quantity: quantity,
       lowStockLimit: lowStockLimit,
       imagePath: imagePath,
+      barcode: barcode,
+      barcodeImagePath: barcodeImagePath,
       isTrackableInventory: isTrackableInventory,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -50,6 +57,10 @@ class InventoryItemModel {
       ..quantity = item.quantity
       ..lowStockLimit = item.lowStockLimit
       ..imagePath = item.imagePath
+      ..barcode = item.barcode?.trim().isEmpty == true
+          ? null
+          : item.barcode?.trim()
+      ..barcodeImagePath = item.barcodeImagePath
       ..isTrackableInventory = item.isTrackableInventory
       ..createdAt = item.createdAt
       ..updatedAt = item.updatedAt;

@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../billing/data/models/billing_order_model.dart';
+import '../../../expenses/data/models/expense_model.dart';
 import '../../../settings/data/models/app_settings_model.dart';
 import '../../../settings/data/models/low_stock_notification_model.dart';
 import '../models/inventory_item_model.dart';
@@ -20,6 +21,7 @@ class InventoryLocalDataSource {
       [
         InventoryItemModelSchema,
         BillingOrderModelSchema,
+        ExpenseModelSchema,
         AppSettingsModelSchema,
         LowStockNotificationModelSchema,
       ],
@@ -43,9 +45,26 @@ class InventoryLocalDataSource {
         .or()
         .itemCodeContains(query, caseSensitive: false)
         .or()
+        .barcodeContains(query, caseSensitive: false)
+        .or()
         .categoryContains(query, caseSensitive: false)
         .sortByUpdatedAtDesc()
         .watch(fireImmediately: true);
+  }
+
+  Future<InventoryItemModel?> findByBarcode(String barcode) {
+    return _isar.inventoryItemModels
+        .filter()
+        .barcodeEqualTo(barcode.trim(), caseSensitive: false)
+        .findFirst();
+  }
+
+  Future<bool> isBarcodeUnique({
+    required String barcode,
+    int? excludingItemId,
+  }) async {
+    final existing = await findByBarcode(barcode);
+    return existing == null || existing.id == excludingItemId;
   }
 
   Future<List<String>> getCategories() async {

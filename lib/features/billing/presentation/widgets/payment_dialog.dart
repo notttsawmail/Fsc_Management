@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../domain/entities/billing_enums.dart';
 
 class PaymentDialog extends StatelessWidget {
@@ -23,7 +24,7 @@ class PaymentDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Total: Rs ${totalAmount.toStringAsFixed(2)}'),
+          Text('Total: ${nepaliRupees(totalAmount)}'),
           if (isPhonePay) ...[
             const SizedBox(height: 12),
             const Text(

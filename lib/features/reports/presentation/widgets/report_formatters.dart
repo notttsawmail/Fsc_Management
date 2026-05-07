@@ -1,4 +1,6 @@
-String money(num value) => 'Rs. ${value.toStringAsFixed(0)}';
+import '../../../../core/formatters/currency_formatters.dart';
+
+String money(num value) => nepaliRupees(value, decimals: false);
 
 String shortDate(DateTime value) {
   final day = value.day.toString().padLeft(2, '0');

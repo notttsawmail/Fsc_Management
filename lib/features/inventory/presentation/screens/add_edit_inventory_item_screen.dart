@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../receipt_barcode/presentation/providers/receipt_barcode_providers.dart';
 import '../../domain/entities/inventory_item.dart';
 import '../providers/inventory_providers.dart';
 import '../widgets/item_image_preview.dart';
@@ -28,6 +29,7 @@ class _AddEditInventoryItemScreenState
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _lowStockLimitController = TextEditingController();
+  final _barcodeController = TextEditingController();
   final _imagePicker = ImagePicker();
 
   String? _imagePath;
@@ -51,6 +53,7 @@ class _AddEditInventoryItemScreenState
     _priceController.text = item.price.toStringAsFixed(2);
     _quantityController.text = item.quantity.toString();
     _lowStockLimitController.text = item.lowStockLimit.toString();
+    _barcodeController.text = item.barcode ?? '';
     _imagePath = item.imagePath;
     _isTrackableInventory = item.isTrackableInventory;
   }
@@ -63,6 +66,7 @@ class _AddEditInventoryItemScreenState
     _priceController.dispose();
     _quantityController.dispose();
     _lowStockLimitController.dispose();
+    _barcodeController.dispose();
     super.dispose();
   }
 
@@ -119,6 +123,36 @@ class _AddEditInventoryItemScreenState
                 validator: _requiredValidator,
               ),
               const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _barcodeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Barcode',
+                        prefixIcon: Icon(Icons.qr_code_scanner_outlined),
+                      ),
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    tooltip: 'Generate barcode',
+                    onPressed: controllerState.isLoading
+                        ? null
+                        : () async {
+                            final barcode = await ref
+                                .read(barcodeControllerProvider.notifier)
+                                .generate(itemId: widget.item?.id);
+                            if (!mounted) return;
+                            _barcodeController.text = barcode;
+                          },
+                    icon: const Icon(Icons.auto_fix_high_outlined),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _categoryController,
                 decoration: const InputDecoration(
@@ -155,8 +189,9 @@ class _AddEditInventoryItemScreenState
               TextFormField(
                 controller: _priceController,
                 decoration: const InputDecoration(
-                  labelText: 'Price',
-                  prefixIcon: Icon(Icons.attach_money),
+                  labelText: 'Price (Nepali Rs.)',
+                  prefixIcon: Icon(Icons.payments_outlined),
+                  prefixText: 'Rs. ',
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -181,34 +216,46 @@ class _AddEditInventoryItemScreenState
                 },
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _quantityController,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantity',
-                        prefixIcon: Icon(Icons.numbers),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: _nonNegativeIntValidator,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final stacked = constraints.maxWidth < 520;
+                  final quantityField = TextFormField(
+                    controller: _quantityController,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      prefixIcon: Icon(Icons.numbers),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _lowStockLimitController,
-                      decoration: const InputDecoration(
-                        labelText: 'Low stock limit',
-                        prefixIcon: Icon(Icons.notification_important_outlined),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: _nonNegativeIntValidator,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: _nonNegativeIntValidator,
+                  );
+                  final lowStockField = TextFormField(
+                    controller: _lowStockLimitController,
+                    decoration: const InputDecoration(
+                      labelText: 'Low stock limit',
+                      prefixIcon: Icon(Icons.notification_important_outlined),
                     ),
-                  ),
-                ],
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: _nonNegativeIntValidator,
+                  );
+                  if (stacked) {
+                    return Column(
+                      children: [
+                        quantityField,
+                        const SizedBox(height: 12),
+                        lowStockField,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: quantityField),
+                      const SizedBox(width: 12),
+                      Expanded(child: lowStockField),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
@@ -280,6 +327,20 @@ class _AddEditInventoryItemScreenState
 
     final now = DateTime.now();
     final existing = widget.item;
+    final barcode = _barcodeController.text.trim();
+    if (barcode.isNotEmpty) {
+      try {
+        await ref
+            .read(barcodeControllerProvider.notifier)
+            .validate(barcode: barcode, excludingItemId: existing?.id);
+      } catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        return;
+      }
+    }
     final item = InventoryItem(
       id: existing?.id ?? 0,
       name: _nameController.text.trim(),
@@ -289,6 +350,7 @@ class _AddEditInventoryItemScreenState
       quantity: int.parse(_quantityController.text),
       lowStockLimit: int.parse(_lowStockLimitController.text),
       imagePath: _imagePath,
+      barcode: barcode.isEmpty ? null : barcode,
       isTrackableInventory: _isTrackableInventory,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,

@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../billing/data/models/billing_order_model.dart';
+import '../../../expenses/data/models/expense_model.dart';
 import '../../../inventory/data/models/inventory_item_model.dart';
 import '../../../settings/data/models/app_settings_model.dart';
 import '../../../settings/data/models/low_stock_notification_model.dart';
@@ -17,6 +18,7 @@ class ReportsLocalDataSource {
       [
         InventoryItemModelSchema,
         BillingOrderModelSchema,
+        ExpenseModelSchema,
         AppSettingsModelSchema,
         LowStockNotificationModelSchema,
       ],
@@ -47,6 +49,26 @@ class ReportsLocalDataSource {
       startNepaliDate: _compactDate(start),
       endNepaliDate: _compactDate(end),
     );
+  }
+
+  Future<List<ExpenseModel>> getExpensesBetween({
+    required DateTime startInclusive,
+    required DateTime endInclusive,
+  }) {
+    return _isar.expenseModels
+        .filter()
+        .expenseDateBetween(startInclusive, endInclusive)
+        .sortByExpenseDateDesc()
+        .findAll();
+  }
+
+  Future<List<ExpenseModel>> getExpensesForMonth(DateTime month) {
+    final start = DateTime(month.year, month.month);
+    final end = DateTime(
+      month.year,
+      month.month + 1,
+    ).subtract(const Duration(milliseconds: 1));
+    return getExpensesBetween(startInclusive: start, endInclusive: end);
   }
 
   Future<List<InventoryItemModel>> getInventoryItems() {

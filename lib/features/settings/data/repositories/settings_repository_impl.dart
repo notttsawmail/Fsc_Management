@@ -41,11 +41,13 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final backupPath = await _localDataSource.exportBackup();
     final inventory = await _localDataSource.getInventoryItems();
     final orders = await _localDataSource.getOrders();
+    final expenses = await _localDataSource.getExpenses();
     final result = BackupResult(
       path: backupPath,
       createdAt: DateTime.now(),
       inventoryCount: inventory.length,
       orderCount: orders.length,
+      expenseCount: expenses.length,
       settingsCount: 1,
     );
     await recordBackup(result);
@@ -60,6 +62,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       createdAt: DateTime.now(),
       inventoryCount: counts.inventoryCount,
       orderCount: counts.orderCount,
+      expenseCount: counts.expenseCount,
       settingsCount: counts.settingsCount,
     );
     await recordBackup(result);

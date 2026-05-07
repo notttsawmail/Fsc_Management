@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../receipt_barcode/presentation/screens/printer_settings_screen.dart';
 import '../../domain/entities/app_settings.dart';
 import '../providers/settings_providers.dart';
 import '../widgets/settings_formatters.dart';
@@ -38,6 +40,13 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Settings'),
         actions: [
+          IconButton(
+            tooltip: 'Printer settings',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PrinterSettingsScreen()),
+            ),
+            icon: const Icon(Icons.print_outlined),
+          ),
           if (controllerState.isLoading)
             const Padding(
               padding: EdgeInsets.only(right: 16),
@@ -115,7 +124,7 @@ class _SettingsFormState extends ConsumerState<SettingsForm> {
   void _sync(AppSettings settings) {
     _shopNameController.text = settings.shopName;
     _shopAddressController.text = settings.shopAddress;
-    _currencyController.text = settings.currencySymbol;
+    _currencyController.text = nepaliRupeeSymbol;
     _taxController.text = settings.taxPercentage.toStringAsFixed(2);
     _lowStockThresholdController.text = settings.lowStockAlertThreshold
         .toString();
@@ -160,39 +169,29 @@ class _SettingsFormState extends ConsumerState<SettingsForm> {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _currencyController,
-                      decoration: const InputDecoration(
-                        labelText: 'Currency symbol',
-                        prefixIcon: Icon(Icons.currency_exchange_outlined),
-                      ),
-                      validator: _required,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _taxController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tax percentage',
-                        suffixText: '%',
-                        prefixIcon: Icon(Icons.percent_outlined),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,2}'),
-                        ),
-                      ],
-                      validator: _nonNegativeDecimal,
-                    ),
-                  ),
+              TextFormField(
+                controller: _currencyController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Currency',
+                  prefixIcon: Icon(Icons.currency_exchange_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _taxController,
+                decoration: const InputDecoration(
+                  labelText: 'Tax percentage',
+                  suffixText: '%',
+                  prefixIcon: Icon(Icons.percent_outlined),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
                 ],
+                validator: _nonNegativeDecimal,
               ),
               const SizedBox(height: 4),
               SwitchListTile(
@@ -322,7 +321,7 @@ class _SettingsFormState extends ConsumerState<SettingsForm> {
     final settings = widget.settings.copyWith(
       shopName: _shopNameController.text,
       shopAddress: _shopAddressController.text,
-      currencySymbol: _currencyController.text,
+      currencySymbol: nepaliRupeeSymbol,
       taxPercentage: double.parse(_taxController.text),
       useNepaliTimezone: _useNepaliTimezone,
       defaultPaymentMethod: _defaultPaymentMethod,
@@ -498,7 +497,7 @@ class _DataSettingsCard extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Restore backup'),
         content: const Text(
-          'Restoring a backup will replace local inventory, orders, settings, and notification history.',
+          'Restoring a backup will replace local inventory, orders, expenses, settings, and notification history.',
         ),
         actions: [
           TextButton(
@@ -524,7 +523,7 @@ class _DataSettingsCard extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Clear all data'),
         content: const Text(
-          'This removes local inventory, billing orders, token history, notification state, and saved settings.',
+          'This removes local inventory, billing orders, expenses, token history, notification state, and saved settings.',
         ),
         actions: [
           TextButton(

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
+import '../../../receipt_barcode/presentation/providers/receipt_barcode_providers.dart';
+import '../../../receipt_barcode/presentation/screens/barcode_scanner_screen.dart';
 import '../../domain/entities/billing_order.dart';
 import '../providers/billing_providers.dart';
 import '../widgets/cart_panel.dart';
@@ -121,6 +124,22 @@ class BillingScreen extends ConsumerWidget {
             final order = await ref
                 .read(billingControllerProvider.notifier)
                 .confirmPayment(paymentMethod);
+            final printerSettings = await ref.read(
+              printerSettingsProvider.future,
+            );
+            if (printerSettings.autoPrintAfterBilling) {
+              try {
+                await ref
+                    .read(receiptActionControllerProvider.notifier)
+                    .printThermal(order);
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Auto print failed: $error')),
+                  );
+                }
+              }
+            }
             if (context.mounted) {
               await Navigator.of(context).push(
                 MaterialPageRoute(
@@ -227,7 +246,7 @@ class _TokenTabs extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '${cart.tokens.length} open | ${activeToken.totalItems} items | Rs ${activeToken.totalAmount.toStringAsFixed(0)}',
+                          '${cart.tokens.length} open | ${activeToken.totalItems} items | ${nepaliRupees(activeToken.totalAmount, decimals: false)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -402,7 +421,7 @@ class _TokenManager extends ConsumerWidget {
                             const SizedBox(height: 12),
                             Text('${token.totalItems} items'),
                             Text(
-                              'Rs ${token.totalAmount.toStringAsFixed(2)}',
+                              nepaliRupees(token.totalAmount),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const Spacer(),
@@ -498,7 +517,7 @@ class _InventorySearchPane extends ConsumerWidget {
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: 'Search inventory items',
+              hintText: 'Search item name, code, or barcode',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 tooltip: 'Clear search',
@@ -509,6 +528,32 @@ class _InventorySearchPane extends ConsumerWidget {
             ),
             onChanged: (value) =>
                 ref.read(billingSearchQueryProvider.notifier).state = value,
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.tonalIcon(
+              onPressed: () async {
+                final item = await Navigator.of(context).push<InventoryItem>(
+                  MaterialPageRoute(
+                    builder: (_) => const BarcodeScannerScreen(),
+                  ),
+                );
+                if (item == null || !context.mounted) return;
+                try {
+                  ref.read(cartProvider.notifier).addItem(item);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${item.name} added to cart')),
+                  );
+                } catch (error) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(error.toString())));
+                }
+              },
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              label: const Text('Scan barcode'),
+            ),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -610,7 +655,7 @@ class _BillingInventoryTile extends ConsumerWidget {
                         Row(
                           children: [
                             Text(
-                              'Rs ${item.price.toStringAsFixed(2)}',
+                              nepaliRupees(item.price),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const Spacer(),
@@ -631,7 +676,7 @@ class _BillingInventoryTile extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'Rs ${item.price.toStringAsFixed(2)}',
+                              nepaliRupees(item.price),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 6),

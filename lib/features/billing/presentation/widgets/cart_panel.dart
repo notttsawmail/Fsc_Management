@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
 import '../../domain/entities/billing_enums.dart';
 import '../providers/billing_providers.dart';
 import 'item_quantity_controls.dart';
@@ -24,32 +25,48 @@ class CartPanel extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Token ${activeToken.tokenNumber}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        '${cart.tokens.length} open token${cart.tokens.length == 1 ? '' : 's'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(
-                      'Token ${activeToken.tokenNumber}',
-                      style: Theme.of(context).textTheme.titleLarge,
+                    Text('${cart.totalItems} items'),
+                    IconButton(
+                      tooltip: 'Clear token',
+                      onPressed: cart.isEmpty ? null : cartController.clear,
+                      icon: const Icon(Icons.delete_sweep_outlined),
                     ),
-                    Text(
-                      '${cart.tokens.length} open token${cart.tokens.length == 1 ? '' : 's'}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    IconButton(
+                      tooltip: 'Close token',
+                      onPressed: cartController.closeActiveToken,
+                      icon: const Icon(Icons.close_fullscreen_outlined),
                     ),
                   ],
-                ),
-                const Spacer(),
-                Text('${cart.totalItems} items'),
-                IconButton(
-                  tooltip: 'Clear token',
-                  onPressed: cart.isEmpty ? null : cartController.clear,
-                  icon: const Icon(Icons.delete_sweep_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Close token',
-                  onPressed: cartController.closeActiveToken,
-                  icon: const Icon(Icons.close_fullscreen_outlined),
                 ),
               ],
             ),
@@ -87,9 +104,7 @@ class CartPanel extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              Text(
-                                'Rs ${cartItem.item.price.toStringAsFixed(2)} each',
-                              ),
+                              Text('${nepaliRupees(cartItem.item.price)} each'),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
@@ -104,11 +119,15 @@ class CartPanel extends ConsumerWidget {
                                         .increaseQuantity(cartItem.item),
                                   ),
                                   const Spacer(),
-                                  Text(
-                                    'Rs ${cartItem.lineTotal.toStringAsFixed(2)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
+                                  Flexible(
+                                    child: Text(
+                                      nepaliRupees(cartItem.lineTotal),
+                                      textAlign: TextAlign.end,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -181,7 +200,14 @@ class _TotalRow extends StatelessWidget {
         children: [
           Text(label, style: style),
           const Spacer(),
-          Text('Rs ${value.toStringAsFixed(2)}', style: style),
+          Flexible(
+            child: Text(
+              nepaliRupees(value),
+              style: style,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

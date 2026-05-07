@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../billing/data/models/billing_order_model.dart';
+import '../../../expenses/data/models/expense_model.dart';
 import '../../../inventory/data/models/inventory_item_model.dart';
 import '../models/app_settings_model.dart';
 import '../models/low_stock_notification_model.dart';
@@ -21,6 +22,7 @@ class SettingsLocalDataSource {
       [
         InventoryItemModelSchema,
         BillingOrderModelSchema,
+        ExpenseModelSchema,
         AppSettingsModelSchema,
         LowStockNotificationModelSchema,
       ],
@@ -68,6 +70,10 @@ class SettingsLocalDataSource {
     return _isar.billingOrderModels.where().sortByCreatedAtDesc().findAll();
   }
 
+  Future<List<ExpenseModel>> getExpenses() {
+    return _isar.expenseModels.where().sortByExpenseDateDesc().findAll();
+  }
+
   Future<List<LowStockNotificationModel>> getNotificationStates() {
     return _isar.lowStockNotificationModels.where().findAll();
   }
@@ -103,6 +109,7 @@ class SettingsLocalDataSource {
           .map(_inventoryToJson)
           .toList(),
       'orders': (await getOrders()).map(_orderToJson).toList(),
+      'expenses': (await getExpenses()).map(_expenseToJson).toList(),
       'settings': (await _isar.appSettingsModels.where().findAll())
           .map((settings) => settings.toJson())
           .toList(),
@@ -156,6 +163,10 @@ class SettingsLocalDataSource {
         .cast<Map<String, dynamic>>()
         .map(_orderFromJson)
         .toList();
+    final expenses = (decoded['expenses'] as List? ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(_expenseFromJson)
+        .toList();
     final settings = (decoded['settings'] as List)
         .cast<Map<String, dynamic>>()
         .map(AppSettingsModel.fromJson)
@@ -168,11 +179,13 @@ class SettingsLocalDataSource {
 
     await _isar.writeTxn(() async {
       await _isar.lowStockNotificationModels.clear();
+      await _isar.expenseModels.clear();
       await _isar.billingOrderModels.clear();
       await _isar.inventoryItemModels.clear();
       await _isar.appSettingsModels.clear();
       await _isar.inventoryItemModels.putAll(inventoryItems);
       await _isar.billingOrderModels.putAll(orders);
+      await _isar.expenseModels.putAll(expenses);
       await _isar.appSettingsModels.putAll(
         settings.isEmpty ? [AppSettingsModel.defaults()] : settings,
       );
@@ -182,6 +195,7 @@ class SettingsLocalDataSource {
     return BackupImportCounts(
       inventoryCount: inventoryItems.length,
       orderCount: orders.length,
+      expenseCount: expenses.length,
       settingsCount: settings.isEmpty ? 1 : settings.length,
     );
   }
@@ -189,6 +203,7 @@ class SettingsLocalDataSource {
   Future<void> clearAllData() async {
     await _isar.writeTxn(() async {
       await _isar.lowStockNotificationModels.clear();
+      await _isar.expenseModels.clear();
       await _isar.billingOrderModels.clear();
       await _isar.inventoryItemModels.clear();
       await _isar.appSettingsModels.clear();
@@ -301,16 +316,47 @@ class SettingsLocalDataSource {
       ..quantity = (json['quantity'] as num?)?.toInt() ?? 0
       ..lineTotal = (json['lineTotal'] as num?)?.toDouble() ?? 0;
   }
+
+  Map<String, dynamic> _expenseToJson(ExpenseModel expense) {
+    return {
+      'id': expense.id,
+      'title': expense.title,
+      'category': expense.category,
+      'amount': expense.amount,
+      'description': expense.description,
+      'paymentMethod': expense.paymentMethod,
+      'expenseDate': expense.expenseDate.toIso8601String(),
+      'createdAt': expense.createdAt.toIso8601String(),
+    };
+  }
+
+  ExpenseModel _expenseFromJson(Map<String, dynamic> json) {
+    return ExpenseModel()
+      ..id = (json['id'] as num?)?.toInt() ?? Isar.autoIncrement
+      ..title = json['title'] as String? ?? ''
+      ..category = json['category'] as String? ?? 'miscellaneous'
+      ..amount = (json['amount'] as num?)?.toDouble() ?? 0
+      ..description = json['description'] as String? ?? ''
+      ..paymentMethod = json['paymentMethod'] as String? ?? 'cash'
+      ..expenseDate =
+          DateTime.tryParse(json['expenseDate'] as String? ?? '') ??
+          DateTime.now()
+      ..createdAt =
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now();
+  }
 }
 
 class BackupImportCounts {
   const BackupImportCounts({
     required this.inventoryCount,
     required this.orderCount,
+    required this.expenseCount,
     required this.settingsCount,
   });
 
   final int inventoryCount;
   final int orderCount;
+  final int expenseCount;
   final int settingsCount;
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/formatters/currency_formatters.dart';
+import '../../../receipt_barcode/presentation/screens/barcode_generator_screen.dart';
 import '../../domain/entities/inventory_item.dart';
 import '../providers/inventory_providers.dart';
 import '../screens/add_edit_inventory_item_screen.dart';
@@ -74,7 +76,7 @@ class InventoryItemTile extends ConsumerWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          '\$${item.price.toStringAsFixed(2)}',
+                          nepaliRupees(item.price),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -88,6 +90,12 @@ class InventoryItemTile extends ConsumerWidget {
                                 : 'Not tracked',
                           ),
                         ),
+                        if (item.barcode?.isNotEmpty == true)
+                          const Chip(
+                            visualDensity: VisualDensity.compact,
+                            avatar: Icon(Icons.qr_code_2, size: 16),
+                            label: Text('Barcode'),
+                          ),
                       ],
                     ),
                   ],
@@ -104,6 +112,12 @@ class InventoryItemTile extends ConsumerWidget {
                               AddEditInventoryItemScreen(item: item),
                         ),
                       );
+                    case _InventoryAction.barcode:
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BarcodeGeneratorScreen(item: item),
+                        ),
+                      );
                     case _InventoryAction.delete:
                       if (!context.mounted) return;
                       await _confirmDelete(context, ref);
@@ -115,6 +129,13 @@ class InventoryItemTile extends ConsumerWidget {
                     child: ListTile(
                       leading: Icon(Icons.edit_outlined),
                       title: Text('Edit'),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _InventoryAction.barcode,
+                    child: ListTile(
+                      leading: Icon(Icons.qr_code_2),
+                      title: Text('Barcode'),
                     ),
                   ),
                   PopupMenuItem(
@@ -204,4 +225,4 @@ class _QuantityStepper extends ConsumerWidget {
   }
 }
 
-enum _InventoryAction { edit, delete }
+enum _InventoryAction { edit, barcode, delete }
