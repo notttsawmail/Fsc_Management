@@ -5,10 +5,6 @@ abstract class InventoryRepository {
 
   Future<List<String>> getCategories();
 
-  Future<InventoryItem?> findByBarcode(String barcode);
-
-  Future<bool> isBarcodeUnique({required String barcode, int? excludingItemId});
-
   Future<void> addItem(InventoryItem item);
 
   Future<void> updateItem(InventoryItem item);

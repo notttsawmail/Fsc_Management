@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../reports/presentation/widgets/report_formatters.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 import '../providers/expense_providers.dart';
+import 'expense_pdf_preview_screen.dart';
 
 class ExpenseAnalyticsScreen extends ConsumerWidget {
   const ExpenseAnalyticsScreen({super.key});
@@ -12,6 +14,12 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
     final analytics = ref.watch(expenseAnalyticsProvider);
     final report = ref.watch(expenseReportProvider);
     final pdfState = ref.watch(expensePdfControllerProvider);
+    final shopName = ref
+        .watch(appSettingsProvider)
+        .maybeWhen(
+          data: (settings) => settings.shopName,
+          orElse: () => 'FSC Shop',
+        );
 
     ref.listen<AsyncValue<String?>>(expensePdfControllerProvider, (
       previous,
@@ -150,6 +158,20 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  FilledButton.icon(
+                    onPressed: pdfState.isLoading
+                        ? null
+                        : () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ExpensePdfPreviewScreen(
+                                report: data,
+                                shopName: shopName,
+                              ),
+                            ),
+                          ),
+                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    label: const Text('Preview PDF'),
+                  ),
                   OutlinedButton.icon(
                     onPressed: pdfState.isLoading
                         ? null

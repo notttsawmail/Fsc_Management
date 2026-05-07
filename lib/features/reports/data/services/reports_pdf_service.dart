@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../billing/domain/entities/billing_enums.dart';
+import '../../../expenses/domain/entities/expense_enums.dart';
 import '../../domain/entities/daily_sales_report.dart';
 import '../../domain/services/nepali_report_clock.dart';
 
@@ -36,13 +37,35 @@ class ReportsPdfService {
           pw.SizedBox(height: 18),
           _paymentBreakdown(report),
           pw.SizedBox(height: 18),
+          _expenseBreakdown(report),
+          pw.SizedBox(height: 18),
           _itemsTable(report),
+          if (report.expenses.isNotEmpty) ...[
+            pw.SizedBox(height: 18),
+            _expensesTable(report),
+          ],
           pw.SizedBox(height: 16),
           pw.Align(
             alignment: pw.Alignment.centerRight,
-            child: pw.Text(
-              'Total revenue: Rs. ${_money(report.totalIncome)}',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'Total revenue: Rs. ${_money(report.totalIncome)}',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Net profit: Rs. ${_money(report.netProfit)}',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -104,6 +127,8 @@ class ReportsPdfService {
       children: [
         _summaryRow('Total orders/tokens', report.totalOrders.toString()),
         _summaryRow('Total income', 'Rs. ${_money(report.totalIncome)}'),
+        _summaryRow('Total expenses', 'Rs. ${_money(report.totalExpenses)}'),
+        _summaryRow('Net profit', 'Rs. ${_money(report.netProfit)}'),
         _summaryRow('Total quantity sold', report.totalQuantitySold.toString()),
         _summaryRow('Cancelled orders', report.cancelledOrdersCount.toString()),
       ],
@@ -190,6 +215,106 @@ class ReportsPdfService {
                   _cell(item.quantitySold.toString(), alignRight: true),
                   _cell('Rs. ${_money(item.unitPrice)}', alignRight: true),
                   _cell('Rs. ${_money(item.totalRevenue)}', alignRight: true),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _expenseBreakdown(DailySalesReport report) {
+    if (report.expenses.isEmpty) {
+      return pw.Text('Expenses: No expense entries for this period.');
+    }
+
+    final categoryTotals = <String, double>{};
+    for (final expense in report.expenses) {
+      categoryTotals.update(
+        expense.category,
+        (value) => value + expense.amount,
+        ifAbsent: () => expense.amount,
+      );
+    }
+    final entries = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Expense breakdown',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey400),
+          children: [
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _cell('Category', bold: true),
+                _cell('Entries', bold: true, alignRight: true),
+                _cell('Amount', bold: true, alignRight: true),
+              ],
+            ),
+            for (final entry in entries)
+              pw.TableRow(
+                children: [
+                  _cell(entry.key),
+                  _cell(
+                    report.expenses
+                        .where((expense) => expense.category == entry.key)
+                        .length
+                        .toString(),
+                    alignRight: true,
+                  ),
+                  _cell('Rs. ${_money(entry.value)}', alignRight: true),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _expensesTable(DailySalesReport report) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Expense entries',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey400),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(1.1),
+            1: pw.FlexColumnWidth(2.1),
+            2: pw.FlexColumnWidth(1.4),
+            3: pw.FlexColumnWidth(1.3),
+            4: pw.FlexColumnWidth(1.2),
+          },
+          children: [
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _cell('Date', bold: true),
+                _cell('Title', bold: true),
+                _cell('Category', bold: true),
+                _cell('Payment', bold: true),
+                _cell('Amount', bold: true, alignRight: true),
+              ],
+            ),
+            for (final expense in report.expenses)
+              pw.TableRow(
+                children: [
+                  _cell(_clock.displayDate(expense.expenseDate)),
+                  _cell(expense.title),
+                  _cell(expense.category),
+                  _cell(expense.paymentMethod.label),
+                  _cell('Rs. ${_money(expense.amount)}', alignRight: true),
                 ],
               ),
           ],

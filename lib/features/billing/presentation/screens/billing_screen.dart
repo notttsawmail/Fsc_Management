@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatters/currency_formatters.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
+import '../../../inventory/presentation/widgets/item_image_preview.dart';
 import '../../../receipt_barcode/presentation/providers/receipt_barcode_providers.dart';
-import '../../../receipt_barcode/presentation/screens/barcode_scanner_screen.dart';
 import '../../domain/entities/billing_order.dart';
 import '../providers/billing_providers.dart';
 import '../widgets/cart_panel.dart';
@@ -335,13 +335,26 @@ class _TokenTabs extends ConsumerWidget {
   }
 }
 
-class _TokenManager extends ConsumerWidget {
+class _TokenManager extends ConsumerStatefulWidget {
   const _TokenManager();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TokenManager> createState() => _TokenManagerState();
+}
+
+class _TokenManagerState extends ConsumerState<_TokenManager> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
     final controller = ref.read(cartProvider.notifier);
+    final query = _searchQuery.trim();
+    final filteredTokens = query.isEmpty
+        ? cart.tokens
+        : cart.tokens
+              .where((token) => token.tokenNumber.toString().contains(query))
+              .toList();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
@@ -362,136 +375,169 @@ class _TokenManager extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
+          TextField(
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: 'Search token number',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      onPressed: () => setState(() => _searchQuery = ''),
+                      icon: const Icon(Icons.close),
+                    ),
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+          const SizedBox(height: 12),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 430;
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: constraints.maxWidth >= 560 ? 280 : 420,
-                    mainAxisExtent: narrow ? 174 : 158,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: cart.tokens.length,
-                  itemBuilder: (context, index) {
-                    final token = cart.tokens[index];
-                    final isActive = token.id == cart.activeTokenId;
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () {
-                        controller.selectToken(token.id);
-                        Navigator.of(context).maybePop();
-                      },
-                      child: Ink(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(context).colorScheme.surface,
-                          border: Border.all(
-                            color: isActive
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).dividerColor,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+            child: filteredTokens.isEmpty
+                ? const Center(child: Text('No matching tokens'))
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 430;
+                      return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: constraints.maxWidth >= 560
+                              ? 280
+                              : 420,
+                          mainAxisExtent: narrow ? 174 : 158,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  child: Text(token.tokenNumber.toString()),
+                        itemCount: filteredTokens.length,
+                        itemBuilder: (context, index) {
+                          final token = filteredTokens[index];
+                          final isActive = token.id == cart.activeTokenId;
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              controller.selectToken(token.id);
+                              Navigator.of(context).maybePop();
+                            },
+                            child: Ink(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer
+                                    : Theme.of(context).colorScheme.surface,
+                                border: Border.all(
+                                  color: isActive
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).dividerColor,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Token ${token.tokenNumber}',
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        child: Text(
+                                          token.tokenNumber.toString(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Token ${token.tokenNumber}',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (isActive)
+                                        const Icon(Icons.check_circle),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text('${token.totalItems} items'),
+                                  Text(
+                                    nepaliRupees(token.totalAmount),
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleMedium,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                if (isActive) const Icon(Icons.check_circle),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text('${token.totalItems} items'),
-                            Text(
-                              nepaliRupees(token.totalAmount),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const Spacer(),
-                            if (narrow)
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        controller.selectToken(token.id);
-                                        Navigator.of(context).maybePop();
-                                      },
-                                      icon: const Icon(Icons.login_outlined),
-                                      label: const Text('Open'),
+                                  const Spacer(),
+                                  if (narrow)
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () {
+                                              controller.selectToken(token.id);
+                                              Navigator.of(context).maybePop();
+                                            },
+                                            icon: const Icon(
+                                              Icons.login_outlined,
+                                            ),
+                                            label: const Text('Open'),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Clear',
+                                          onPressed: token.isEmpty
+                                              ? null
+                                              : () => controller.clearToken(
+                                                  token.id,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.delete_sweep_outlined,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Remove token',
+                                          onPressed: () =>
+                                              controller.closeToken(token.id),
+                                          icon: const Icon(Icons.close),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              controller.selectToken(token.id);
+                                              Navigator.of(context).maybePop();
+                                            },
+                                            child: const Text('Open'),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Clear',
+                                          onPressed: token.isEmpty
+                                              ? null
+                                              : () => controller.clearToken(
+                                                  token.id,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.delete_sweep_outlined,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Remove token',
+                                          onPressed: () =>
+                                              controller.closeToken(token.id),
+                                          icon: const Icon(Icons.close),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Clear',
-                                    onPressed: token.isEmpty
-                                        ? null
-                                        : () => controller.clearToken(token.id),
-                                    icon: const Icon(
-                                      Icons.delete_sweep_outlined,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Remove token',
-                                    onPressed: () =>
-                                        controller.closeToken(token.id),
-                                    icon: const Icon(Icons.close),
-                                  ),
-                                ],
-                              )
-                            else
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        controller.selectToken(token.id);
-                                        Navigator.of(context).maybePop();
-                                      },
-                                      child: const Text('Open'),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Clear',
-                                    onPressed: token.isEmpty
-                                        ? null
-                                        : () => controller.clearToken(token.id),
-                                    icon: const Icon(
-                                      Icons.delete_sweep_outlined,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Remove token',
-                                    onPressed: () =>
-                                        controller.closeToken(token.id),
-                                    icon: const Icon(Icons.close),
-                                  ),
                                 ],
                               ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).maybePop(),
@@ -517,7 +563,7 @@ class _InventorySearchPane extends ConsumerWidget {
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: 'Search item name, code, or barcode',
+              hintText: 'Search item name, code, or category',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 tooltip: 'Clear search',
@@ -528,32 +574,6 @@ class _InventorySearchPane extends ConsumerWidget {
             ),
             onChanged: (value) =>
                 ref.read(billingSearchQueryProvider.notifier).state = value,
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.tonalIcon(
-              onPressed: () async {
-                final item = await Navigator.of(context).push<InventoryItem>(
-                  MaterialPageRoute(
-                    builder: (_) => const BarcodeScannerScreen(),
-                  ),
-                );
-                if (item == null || !context.mounted) return;
-                try {
-                  ref.read(cartProvider.notifier).addItem(item);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${item.name} added to cart')),
-                  );
-                } catch (error) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(error.toString())));
-                }
-              },
-              icon: const Icon(Icons.qr_code_scanner_outlined),
-              label: const Text('Scan barcode'),
-            ),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -641,7 +661,7 @@ class _BillingInventoryTile extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            _ItemIcon(),
+                            _ItemImage(imagePath: item.imagePath),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _ItemDetails(
@@ -666,7 +686,7 @@ class _BillingInventoryTile extends ConsumerWidget {
                     )
                   : Row(
                       children: [
-                        _ItemIcon(),
+                        _ItemImage(imagePath: item.imagePath),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _ItemDetails(item: item, stockText: stockText),
@@ -693,18 +713,14 @@ class _BillingInventoryTile extends ConsumerWidget {
   }
 }
 
-class _ItemIcon extends StatelessWidget {
+class _ItemImage extends StatelessWidget {
+  const _ItemImage({required this.imagePath});
+
+  final String? imagePath;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.fastfood_outlined),
-    );
+    return ItemImagePreview(imagePath: imagePath, size: 64);
   }
 }
 
@@ -716,22 +732,87 @@ class _ItemDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lowStock = item.isLowStock;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           item.name,
-          style: Theme.of(context).textTheme.titleMedium,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 2),
-        Text(
-          '${item.itemCode} | $stockText',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _BillingMetaBadge(icon: Icons.tag_outlined, label: item.itemCode),
+            _BillingMetaBadge(
+              icon: Icons.category_outlined,
+              label: item.category,
+            ),
+            _BillingMetaBadge(
+              icon: lowStock
+                  ? Icons.warning_amber_rounded
+                  : Icons.inventory_2_outlined,
+              label: stockText,
+              backgroundColor: lowStock
+                  ? theme.colorScheme.errorContainer
+                  : theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: lowStock
+                  ? theme.colorScheme.onErrorContainer
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _BillingMetaBadge extends StatelessWidget {
+  const _BillingMetaBadge({
+    required this.icon,
+    required this.label,
+    this.backgroundColor,
+    this.foregroundColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = backgroundColor ?? theme.colorScheme.surfaceContainerHighest;
+    final fg = foregroundColor ?? theme.colorScheme.onSurfaceVariant;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: fg),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

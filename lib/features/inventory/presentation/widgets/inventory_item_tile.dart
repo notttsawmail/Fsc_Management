@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatters/currency_formatters.dart';
-import '../../../receipt_barcode/presentation/screens/barcode_generator_screen.dart';
 import '../../domain/entities/inventory_item.dart';
 import '../providers/inventory_providers.dart';
 import '../screens/add_edit_inventory_item_screen.dart';
@@ -16,86 +15,158 @@ class InventoryItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final quantityLabel = item.isTrackableInventory
+        ? '${item.quantity} in stock'
+        : 'Stock not tracked';
+    final stockTone = item.isLowStock
+        ? theme.colorScheme.errorContainer
+        : theme.colorScheme.secondaryContainer;
+    final stockTextTone = item.isLowStock
+        ? theme.colorScheme.onErrorContainer
+        : theme.colorScheme.onSecondaryContainer;
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => AddEditInventoryItemScreen(item: item),
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ItemImagePreview(imagePath: item.imagePath),
-              const SizedBox(width: 12),
+              ItemImagePreview(imagePath: item.imagePath, size: 78),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
                             item.name,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
+                              height: 1.15,
                             ),
                           ),
                         ),
                         if (item.isLowStock)
-                          Tooltip(
-                            message: 'Low stock',
-                            child: Icon(
-                              Icons.warning_amber_rounded,
-                              size: 20,
-                              color: theme.colorScheme.error,
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 16,
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Low stock',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.onErrorContainer,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${item.itemCode} • ${item.category}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MetaBadge(
+                          icon: Icons.tag_outlined,
+                          label: item.itemCode,
+                        ),
+                        _MetaBadge(
+                          icon: Icons.category_outlined,
+                          label: item.category,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 10,
-                      runSpacing: 6,
+                      runSpacing: 10,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text(
-                          nepaliRupees(item.price),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            nepaliRupees(item.price),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: stockTone,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            quantityLabel,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: stockTextTone,
+                            ),
                           ),
                         ),
                         _QuantityStepper(item: item),
-                        Chip(
-                          visualDensity: VisualDensity.compact,
-                          label: Text(
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
                             item.isTrackableInventory
-                                ? 'Tracked'
-                                : 'Not tracked',
+                                ? 'Tracked inventory'
+                                : 'Catalog only',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                        if (item.barcode?.isNotEmpty == true)
-                          const Chip(
-                            visualDensity: VisualDensity.compact,
-                            avatar: Icon(Icons.qr_code_2, size: 16),
-                            label: Text('Barcode'),
-                          ),
                       ],
                     ),
                   ],
@@ -112,12 +183,6 @@ class InventoryItemTile extends ConsumerWidget {
                               AddEditInventoryItemScreen(item: item),
                         ),
                       );
-                    case _InventoryAction.barcode:
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => BarcodeGeneratorScreen(item: item),
-                        ),
-                      );
                     case _InventoryAction.delete:
                       if (!context.mounted) return;
                       await _confirmDelete(context, ref);
@@ -129,13 +194,6 @@ class InventoryItemTile extends ConsumerWidget {
                     child: ListTile(
                       leading: Icon(Icons.edit_outlined),
                       title: Text('Edit'),
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _InventoryAction.barcode,
-                    child: ListTile(
-                      leading: Icon(Icons.qr_code_2),
-                      title: Text('Barcode'),
                     ),
                   ),
                   PopupMenuItem(
@@ -188,14 +246,14 @@ class _QuantityStepper extends ConsumerWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).dividerColor),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
             tooltip: 'Decrease quantity',
-            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints.tightFor(width: 42, height: 42),
             onPressed: item.quantity == 0
                 ? null
                 : () => ref
@@ -204,16 +262,18 @@ class _QuantityStepper extends ConsumerWidget {
             icon: const Icon(Icons.remove),
           ),
           SizedBox(
-            width: 36,
+            width: 44,
             child: Text(
               '${item.quantity}',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           IconButton(
             tooltip: 'Increase quantity',
-            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints.tightFor(width: 42, height: 42),
             onPressed: () => ref
                 .read(inventoryControllerProvider.notifier)
                 .adjustQuantity(id: item.id, delta: 1),
@@ -225,4 +285,37 @@ class _QuantityStepper extends ConsumerWidget {
   }
 }
 
-enum _InventoryAction { edit, barcode, delete }
+class _MetaBadge extends StatelessWidget {
+  const _MetaBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _InventoryAction { edit, delete }

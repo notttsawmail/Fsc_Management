@@ -59,10 +59,10 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             child: SearchBar(
               controller: _searchController,
-              hintText: 'Search inventory',
+              hintText: 'Search by item name, code, or category',
               leading: const Icon(Icons.search),
               trailing: [
                 if (searchQuery.isNotEmpty)
@@ -102,7 +102,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                   },
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 88),
+                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 96),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       return InventoryItemTile(item: items[index]);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/formatters/currency_formatters.dart';
+import '../../../inventory/presentation/widgets/item_image_preview.dart';
 import '../../domain/entities/billing_enums.dart';
 import '../providers/billing_providers.dart';
 import 'item_quantity_controls.dart';
@@ -82,54 +83,73 @@ class CartPanel extends ConsumerWidget {
                         final available = cart.availableFor(cartItem.item);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Column(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      cartItem.item.name,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Remove',
-                                    onPressed: () => cartController.removeItem(
-                                      cartItem.item.id,
-                                    ),
-                                    icon: const Icon(Icons.close),
-                                  ),
-                                ],
+                              ItemImagePreview(
+                                imagePath: cartItem.item.imagePath,
+                                size: 52,
                               ),
-                              Text('${nepaliRupees(cartItem.item.price)} each'),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  ItemQuantityControls(
-                                    quantity: cartItem.quantity,
-                                    canIncrease:
-                                        !cartItem.item.isTrackableInventory ||
-                                        available > 0,
-                                    onDecrease: () => cartController
-                                        .decreaseQuantity(cartItem.item.id),
-                                    onIncrease: () => cartController
-                                        .increaseQuantity(cartItem.item),
-                                  ),
-                                  const Spacer(),
-                                  Flexible(
-                                    child: Text(
-                                      nepaliRupees(cartItem.lineTotal),
-                                      textAlign: TextAlign.end,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            cartItem.item.name,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Remove',
+                                          onPressed: () => cartController
+                                              .removeItem(cartItem.item.id),
+                                          icon: const Icon(Icons.close),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      '${nepaliRupees(cartItem.item.price)} each',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        ItemQuantityControls(
+                                          quantity: cartItem.quantity,
+                                          canIncrease:
+                                              !cartItem
+                                                  .item
+                                                  .isTrackableInventory ||
+                                              available > 0,
+                                          onDecrease: () =>
+                                              cartController.decreaseQuantity(
+                                                cartItem.item.id,
+                                              ),
+                                          onIncrease: () => cartController
+                                              .increaseQuantity(cartItem.item),
+                                        ),
+                                        const Spacer(),
+                                        Flexible(
+                                          child: Text(
+                                            nepaliRupees(cartItem.lineTotal),
+                                            textAlign: TextAlign.end,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
