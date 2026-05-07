@@ -55,6 +55,7 @@ class _ReportsAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ],
       bottom: const TabBar(
+        isScrollable: true,
         tabs: [
           Tab(icon: Icon(Icons.receipt_long_outlined), text: 'Reports'),
           Tab(icon: Icon(Icons.analytics_outlined), text: 'Analytics'),
@@ -144,63 +145,72 @@ class _ReportContent extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Total orders/tokens',
-                value: report.totalOrders.toString(),
-                icon: Icons.confirmation_number_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Total income',
-                value: money(report.totalIncome),
-                icon: Icons.payments_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Total expenses',
-                value: money(report.totalExpenses),
-                icon: Icons.receipt_long_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Net profit',
-                value: money(report.netProfit),
-                icon: Icons.account_balance_outlined,
-                color: report.netProfit >= 0
-                    ? Colors.green.shade700
-                    : Theme.of(context).colorScheme.error,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Quantity sold',
-                value: report.totalQuantitySold.toString(),
-                icon: Icons.shopping_bag_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 240,
-              child: ReportSummaryCard(
-                title: 'Cancelled',
-                value: report.cancelledOrdersCount.toString(),
-                icon: Icons.cancel_outlined,
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = _responsiveCardWidth(
+              constraints.maxWidth,
+              minWidth: 220,
+              maxWidth: 280,
+            );
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Total orders/tokens',
+                    value: report.totalOrders.toString(),
+                    icon: Icons.confirmation_number_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Total income',
+                    value: money(report.totalIncome),
+                    icon: Icons.payments_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Total expenses',
+                    value: money(report.totalExpenses),
+                    icon: Icons.receipt_long_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Net profit',
+                    value: money(report.netProfit),
+                    icon: Icons.account_balance_outlined,
+                    color: report.netProfit >= 0
+                        ? Colors.green.shade700
+                        : Theme.of(context).colorScheme.error,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Quantity sold',
+                    value: report.totalQuantitySold.toString(),
+                    icon: Icons.shopping_bag_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: ReportSummaryCard(
+                    title: 'Cancelled',
+                    value: report.cancelledOrdersCount.toString(),
+                    icon: Icons.cancel_outlined,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
         _PaymentSummary(report: report),
@@ -252,6 +262,23 @@ class _ReportContent extends ConsumerWidget {
       ],
     );
   }
+}
+
+double _responsiveCardWidth(
+  double availableWidth, {
+  required double minWidth,
+  required double maxWidth,
+}) {
+  if (availableWidth < 420) {
+    return availableWidth;
+  }
+
+  final twoColumnWidth = (availableWidth - 10) / 2;
+  if (twoColumnWidth >= minWidth) {
+    return twoColumnWidth.clamp(minWidth, maxWidth);
+  }
+
+  return availableWidth;
 }
 
 class _ExpenseSummary extends StatelessWidget {

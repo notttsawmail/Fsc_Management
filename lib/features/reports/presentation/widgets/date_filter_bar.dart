@@ -25,34 +25,37 @@ class DateFilterBar extends ConsumerWidget {
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(
-                value: 0,
-                icon: Icon(Icons.today_outlined),
-                label: Text('Today'),
-              ),
-              ButtonSegment(
-                value: 1,
-                icon: Icon(Icons.history_outlined),
-                label: Text('Yesterday'),
-              ),
-              ButtonSegment(
-                value: 2,
-                icon: Icon(Icons.event_outlined),
-                label: Text('Date'),
-              ),
-              ButtonSegment(
-                value: 3,
-                icon: Icon(Icons.date_range_outlined),
-                label: Text('Range'),
-              ),
-            ],
-            selected: {selected},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) async {
-              await _setFilter(context, ref, selection.first);
-            },
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(
+                  value: 0,
+                  icon: Icon(Icons.today_outlined),
+                  label: Text('Today'),
+                ),
+                ButtonSegment(
+                  value: 1,
+                  icon: Icon(Icons.history_outlined),
+                  label: Text('Yesterday'),
+                ),
+                ButtonSegment(
+                  value: 2,
+                  icon: Icon(Icons.event_outlined),
+                  label: Text('Date'),
+                ),
+                ButtonSegment(
+                  value: 3,
+                  icon: Icon(Icons.date_range_outlined),
+                  label: Text('Range'),
+                ),
+              ],
+              selected: {selected},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) async {
+                await _setFilter(context, ref, selection.first);
+              },
+            ),
           ),
           if (filter.type == ReportDateFilterType.customDate &&
               filter.date != null)

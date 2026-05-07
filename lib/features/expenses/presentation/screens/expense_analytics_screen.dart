@@ -60,34 +60,47 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
           children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _SummaryCard(
-                  title: 'Total expenses',
-                  value: money(data.totalExpenses),
-                  icon: Icons.receipt_long_outlined,
-                ),
-                _SummaryCard(
-                  title: 'Total sales',
-                  value: money(data.totalSales),
-                  icon: Icons.point_of_sale_outlined,
-                ),
-                _SummaryCard(
-                  title: 'Net profit',
-                  value: money(data.netProfit),
-                  icon: Icons.account_balance_outlined,
-                  color: data.netProfit >= 0
-                      ? Colors.green.shade700
-                      : Theme.of(context).colorScheme.error,
-                ),
-                _SummaryCard(
-                  title: 'Highest category',
-                  value: data.highestExpenseCategory?.category ?? 'None',
-                  icon: Icons.trending_up_outlined,
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = _responsiveCardWidth(
+                  constraints.maxWidth,
+                  minWidth: 220,
+                  maxWidth: 280,
+                );
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _SummaryCard(
+                      width: cardWidth,
+                      title: 'Total expenses',
+                      value: money(data.totalExpenses),
+                      icon: Icons.receipt_long_outlined,
+                    ),
+                    _SummaryCard(
+                      width: cardWidth,
+                      title: 'Total sales',
+                      value: money(data.totalSales),
+                      icon: Icons.point_of_sale_outlined,
+                    ),
+                    _SummaryCard(
+                      width: cardWidth,
+                      title: 'Net profit',
+                      value: money(data.netProfit),
+                      icon: Icons.account_balance_outlined,
+                      color: data.netProfit >= 0
+                          ? Colors.green.shade700
+                          : Theme.of(context).colorScheme.error,
+                    ),
+                    _SummaryCard(
+                      width: cardWidth,
+                      title: 'Highest category',
+                      value: data.highestExpenseCategory?.category ?? 'None',
+                      icon: Icons.trending_up_outlined,
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             Card(
@@ -207,12 +220,14 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
 
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
+    required this.width,
     required this.title,
     required this.value,
     required this.icon,
     this.color,
   });
 
+  final double width;
   final String title;
   final String value;
   final IconData icon;
@@ -222,7 +237,7 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
     return SizedBox(
-      width: 240,
+      width: width,
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -258,4 +273,21 @@ class _SummaryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+double _responsiveCardWidth(
+  double availableWidth, {
+  required double minWidth,
+  required double maxWidth,
+}) {
+  if (availableWidth < 420) {
+    return availableWidth;
+  }
+
+  final twoColumnWidth = (availableWidth - 10) / 2;
+  if (twoColumnWidth >= minWidth) {
+    return twoColumnWidth.clamp(minWidth, maxWidth);
+  }
+
+  return availableWidth;
 }

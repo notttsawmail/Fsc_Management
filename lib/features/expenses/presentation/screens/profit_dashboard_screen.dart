@@ -23,34 +23,50 @@ class ProfitDashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
           children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _MetricCard(
-                  title: "Today's expenses",
-                  value: money(data.todayExpenses),
-                  icon: Icons.receipt_long_outlined,
-                ),
-                _MetricCard(
-                  title: "Today's profit",
-                  value: money(data.todayProfit.netProfit),
-                  icon: Icons.today_outlined,
-                  color: _profitColor(context, data.todayProfit.netProfit),
-                ),
-                _MetricCard(
-                  title: 'Weekly profit',
-                  value: money(data.weeklyProfit.netProfit),
-                  icon: Icons.date_range_outlined,
-                  color: _profitColor(context, data.weeklyProfit.netProfit),
-                ),
-                _MetricCard(
-                  title: 'Monthly profit',
-                  value: money(data.monthlyProfit.netProfit),
-                  icon: Icons.calendar_month_outlined,
-                  color: _profitColor(context, data.monthlyProfit.netProfit),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = _responsiveCardWidth(
+                  constraints.maxWidth,
+                  minWidth: 220,
+                  maxWidth: 280,
+                );
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _MetricCard(
+                      width: cardWidth,
+                      title: "Today's expenses",
+                      value: money(data.todayExpenses),
+                      icon: Icons.receipt_long_outlined,
+                    ),
+                    _MetricCard(
+                      width: cardWidth,
+                      title: "Today's profit",
+                      value: money(data.todayProfit.netProfit),
+                      icon: Icons.today_outlined,
+                      color: _profitColor(context, data.todayProfit.netProfit),
+                    ),
+                    _MetricCard(
+                      width: cardWidth,
+                      title: 'Weekly profit',
+                      value: money(data.weeklyProfit.netProfit),
+                      icon: Icons.date_range_outlined,
+                      color: _profitColor(context, data.weeklyProfit.netProfit),
+                    ),
+                    _MetricCard(
+                      width: cardWidth,
+                      title: 'Monthly profit',
+                      value: money(data.monthlyProfit.netProfit),
+                      icon: Icons.calendar_month_outlined,
+                      color: _profitColor(
+                        context,
+                        data.monthlyProfit.netProfit,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             Card(
@@ -95,12 +111,14 @@ class ProfitDashboardScreen extends ConsumerWidget {
 
 class _MetricCard extends StatelessWidget {
   const _MetricCard({
+    required this.width,
     required this.title,
     required this.value,
     required this.icon,
     this.color,
   });
 
+  final double width;
   final String title;
   final String value;
   final IconData icon;
@@ -110,7 +128,7 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
     return SizedBox(
-      width: 240,
+      width: width,
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -146,4 +164,21 @@ class _MetricCard extends StatelessWidget {
       ),
     );
   }
+}
+
+double _responsiveCardWidth(
+  double availableWidth, {
+  required double minWidth,
+  required double maxWidth,
+}) {
+  if (availableWidth < 420) {
+    return availableWidth;
+  }
+
+  final twoColumnWidth = (availableWidth - 10) / 2;
+  if (twoColumnWidth >= minWidth) {
+    return twoColumnWidth.clamp(minWidth, maxWidth);
+  }
+
+  return availableWidth;
 }

@@ -15,6 +15,7 @@ class InventoryItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final compact = MediaQuery.sizeOf(context).width < 560;
     final quantityLabel = item.isTrackableInventory
         ? '${item.quantity} in stock'
         : 'Stock not tracked';
@@ -37,176 +38,56 @@ class InventoryItemTile extends ConsumerWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ItemImagePreview(imagePath: item.imagePath, size: 78),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+          child: compact
+              ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        ItemImagePreview(imagePath: item.imagePath, size: 72),
+                        const SizedBox(width: 14),
                         Expanded(
-                          child: Text(
-                            item.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.15,
-                            ),
+                          child: _ItemTileContent(
+                            item: item,
+                            theme: theme,
+                            quantityLabel: quantityLabel,
+                            stockTone: stockTone,
+                            stockTextTone: stockTextTone,
                           ),
                         ),
-                        if (item.isLowStock)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.errorContainer,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  size: 16,
-                                  color: theme.colorScheme.onErrorContainer,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Low stock',
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: theme.colorScheme.onErrorContainer,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _MetaBadge(
-                          icon: Icons.tag_outlined,
-                          label: item.itemCode,
-                        ),
-                        _MetaBadge(
-                          icon: Icons.category_outlined,
-                          label: item.category,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            nepaliRupees(item.price),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: stockTone,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            quantityLabel,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: stockTextTone,
-                            ),
-                          ),
-                        ),
-                        _QuantityStepper(item: item),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            item.isTrackableInventory
-                                ? 'Tracked inventory'
-                                : 'Catalog only',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
+                        _ItemActionMenu(
+                          item: item,
+                          onDelete: () {
+                            _confirmDelete(context, ref);
+                          },
                         ),
                       ],
                     ),
                   ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ItemImagePreview(imagePath: item.imagePath, size: 78),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _ItemTileContent(
+                        item: item,
+                        theme: theme,
+                        quantityLabel: quantityLabel,
+                        stockTone: stockTone,
+                        stockTextTone: stockTextTone,
+                      ),
+                    ),
+                    _ItemActionMenu(
+                      item: item,
+                      onDelete: () {
+                        _confirmDelete(context, ref);
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              PopupMenuButton<_InventoryAction>(
-                tooltip: 'Item actions',
-                onSelected: (action) async {
-                  switch (action) {
-                    case _InventoryAction.edit:
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              AddEditInventoryItemScreen(item: item),
-                        ),
-                      );
-                    case _InventoryAction.delete:
-                      if (!context.mounted) return;
-                      await _confirmDelete(context, ref);
-                  }
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: _InventoryAction.edit,
-                    child: ListTile(
-                      leading: Icon(Icons.edit_outlined),
-                      title: Text('Edit'),
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _InventoryAction.delete,
-                    child: ListTile(
-                      leading: Icon(Icons.delete_outline),
-                      title: Text('Delete'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -236,51 +117,179 @@ class InventoryItemTile extends ConsumerWidget {
   }
 }
 
-class _QuantityStepper extends ConsumerWidget {
-  const _QuantityStepper({required this.item});
+class _ItemTileContent extends StatelessWidget {
+  const _ItemTileContent({
+    required this.item,
+    required this.theme,
+    required this.quantityLabel,
+    required this.stockTone,
+    required this.stockTextTone,
+  });
 
   final InventoryItem item;
+  final ThemeData theme;
+  final String quantityLabel;
+  final Color stockTone;
+  final Color stockTextTone;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: 'Decrease quantity',
-            constraints: const BoxConstraints.tightFor(width: 42, height: 42),
-            onPressed: item.quantity == 0
-                ? null
-                : () => ref
-                      .read(inventoryControllerProvider.notifier)
-                      .adjustQuantity(id: item.id, delta: -1),
-            icon: const Icon(Icons.remove),
-          ),
-          SizedBox(
-            width: 44,
-            child: Text(
-              '${item.quantity}',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: Text(
+                item.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  height: 1.15,
+                ),
+              ),
             ),
+            if (item.isLowStock)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Low stock',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _MetaBadge(icon: Icons.tag_outlined, label: item.itemCode),
+            _MetaBadge(icon: Icons.category_outlined, label: item.category),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                nepaliRupees(item.price),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: stockTone,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                quantityLabel,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: stockTextTone,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                item.isTrackableInventory
+                    ? 'Tracked inventory'
+                    : 'Catalog only',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ItemActionMenu extends StatelessWidget {
+  const _ItemActionMenu({required this.item, required this.onDelete});
+
+  final InventoryItem item;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<_InventoryAction>(
+      tooltip: 'Item actions',
+      onSelected: (action) async {
+        switch (action) {
+          case _InventoryAction.edit:
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AddEditInventoryItemScreen(item: item),
+              ),
+            );
+          case _InventoryAction.delete:
+            if (!context.mounted) return;
+            onDelete();
+        }
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: _InventoryAction.edit,
+          child: ListTile(
+            leading: Icon(Icons.edit_outlined),
+            title: Text('Edit'),
           ),
-          IconButton(
-            tooltip: 'Increase quantity',
-            constraints: const BoxConstraints.tightFor(width: 42, height: 42),
-            onPressed: () => ref
-                .read(inventoryControllerProvider.notifier)
-                .adjustQuantity(id: item.id, delta: 1),
-            icon: const Icon(Icons.add),
+        ),
+        PopupMenuItem(
+          value: _InventoryAction.delete,
+          child: ListTile(
+            leading: Icon(Icons.delete_outline),
+            title: Text('Delete'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

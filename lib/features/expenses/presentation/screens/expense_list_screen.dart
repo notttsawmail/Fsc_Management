@@ -44,6 +44,7 @@ class ExpenseListScreen extends ConsumerWidget {
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(icon: Icon(Icons.receipt_long_outlined), text: 'Expenses'),
               Tab(icon: Icon(Icons.dashboard_outlined), text: 'Profit'),

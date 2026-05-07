@@ -170,11 +170,11 @@ class _AddEditInventoryItemScreenState
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Track inventory'),
+                title: const Text('Track inventory automatically'),
                 subtitle: Text(
                   _isTrackableInventory
-                      ? 'Quantity and low stock alerts are enabled.'
-                      : 'Keep item details without stock tracking.',
+                      ? 'Stock reduces after each sale and low stock alerts are enabled.'
+                      : 'Use this for meat or variable-weight items. Bills and reports still record sold quantity, but stock will not reduce automatically.',
                 ),
                 value: _isTrackableInventory,
                 onChanged: (value) {
@@ -347,50 +347,67 @@ class _ImagePickerField extends StatelessWidget {
         border: Border.all(color: theme.dividerColor),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: [
-          ItemImagePreview(imagePath: imagePath, size: 88),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stacked = constraints.maxWidth < 440;
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Item image',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                hasImage
+                    ? 'Saved locally on this device.'
+                    : 'No image selected',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onPickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: Text(hasImage ? 'Change' : 'Choose'),
+                  ),
+                  if (hasImage)
+                    IconButton.filledTonal(
+                      tooltip: 'Remove image',
+                      onPressed: onRemoveImage,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                ],
+              ),
+            ],
+          );
+
+          if (stacked) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Item image',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  hasImage
-                      ? 'Saved locally on this device.'
-                      : 'No image selected',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: onPickImage,
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: Text(hasImage ? 'Change' : 'Choose'),
-                    ),
-                    if (hasImage)
-                      IconButton.filledTonal(
-                        tooltip: 'Remove image',
-                        onPressed: onRemoveImage,
-                        icon: const Icon(Icons.delete_outline),
-                      ),
-                  ],
-                ),
+                ItemImagePreview(imagePath: imagePath, size: 88),
+                const SizedBox(height: 16),
+                content,
               ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Row(
+            children: [
+              ItemImagePreview(imagePath: imagePath, size: 88),
+              const SizedBox(width: 16),
+              Expanded(child: content),
+            ],
+          );
+        },
       ),
     );
   }
